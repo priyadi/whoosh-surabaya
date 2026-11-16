@@ -16,8 +16,9 @@ What it computes, live from the sliders:
 - Door-to-door time and cost against the flights from both Jakarta airports (HLP–SUB and CGK–SUB), each with its own configurable fare, block time and city-to-airport time, plus a slider for the share of flights leaving from CGK
 - An optional government surcharge on every flight ticket, with the surcharge at which the train ties the flight and the one at which the traveller's verdict turns to the train
 - Economics of building the Bandung–Surabaya section
+- Capacity of the line: the trains and seats the signalling headway allows, what stops cost (little at the ceiling, more for a fixed fleet, most when stopping patterns are mixed), and the seats on the Jakarta–Surabaya flights for scale
 - CO₂ per passenger for both modes, with optional carbon offsets
-- Three verdicts (traveller, investor, planet) and an overall feasibility call
+- Four verdicts: traveller, investor, planet and capacity
 
 Every input and result has an "i" button with an explanation and references.
 

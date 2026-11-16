@@ -57,14 +57,9 @@
   .stop .km{color:var(--muted);font-variant-numeric:tabular-nums;font-size:11.5px}
   .stop .tag{font-size:10px;color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:0 4px;margin-left:6px}
   .stops .btns{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
-  .overall{border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-bottom:12px;background:var(--surface);font-size:14px}
-  .overall .lab{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2)}
-  .overall .big{font-size:20px;font-weight:700;letter-spacing:-.01em;margin:2px 0}
-  .overall.good{border-color:#1f6b45;background:linear-gradient(135deg,#13261c,#1a1a19)}.overall.good .big{color:#5fd39a}
-  .overall.bad{border-color:#7a2b2b;background:linear-gradient(135deg,#2a1414,#1a1a19)}.overall.bad .big{color:#ff8a8a}
-  .overall.mid{border-color:#7a5a12;background:linear-gradient(135deg,#2a2210,#1a1a19)}.overall.mid .big{color:#f0c060}
-  .overall .why{font-size:12.5px;color:var(--text-2)}
-  .verdicts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-bottom:14px}
+  .verdicts{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:14px}
+  @media (min-width:1900px){.verdicts{grid-template-columns:repeat(4,1fr)}}
+  @media (max-width:760px),(min-width:981px) and (max-width:1100px){.verdicts{grid-template-columns:1fr}}
   .vcard{display:grid;grid-template-columns:54px 1fr;gap:14px;align-items:center;border-radius:12px;padding:14px 16px;border:1px solid var(--border);background:var(--surface)}
   .vcard.good{border-color:#1f6b45;background:linear-gradient(135deg,#13261c,#1a1a19)}
   .vcard.bad{border-color:#7a2b2b;background:linear-gradient(135deg,#2a1414,#1a1a19)}
@@ -75,7 +70,7 @@
   .vcard .big{font-size:20px;font-weight:700;letter-spacing:-.01em;margin:2px 0 4px}
   .vcard.good .big{color:#5fd39a}.vcard.bad .big{color:#ff8a8a}.vcard.mid .big{color:#f0c060}
   .vcard .why{font-size:12.5px;color:var(--text-2)}
-  .vcard .why b,.overall .why b{color:var(--text)}
+  .vcard .why b{color:var(--text)}
   .hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:16px}
   .tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
   .tile .k{font-size:11.5px;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em}
@@ -192,7 +187,6 @@
 </aside>
 
 <main>
-  <div class="overall" id="overall"></div>
   <div class="verdicts" id="verdicts"></div>
   <div class="hero" id="hero"></div>
 

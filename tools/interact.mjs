@@ -14,7 +14,7 @@ console.log("baseline", await time());
 await page.click('#map [data-toggle="kebumen"]'); console.log("after map click on Kebumen", await time(), await page.$eval("#stopCount", e => e.innerText));
 await page.click('#stopList input[data-stop="karawang"]'); console.log("after Karawang checkbox", await time());
 await page.click("#stopsNone"); console.log("express", await time());
-await page.select("#preset", "4"); console.log("sceptic preset", await time(), "|", await page.$eval("#overall .big", e => e.innerText));
+await page.select("#preset", "4"); console.log("sceptic preset", await time(), "|", await page.$$eval(".vcard .big", e => e.map(x => x.innerText).join(" / ")));
 await wait(400); console.log("url", await page.evaluate(() => location.search));
 await page.$eval("#spHit", e => e.scrollIntoView({ block: "center" })); await wait(200);
 const box = await (await page.$("#spHit")).boundingBox();

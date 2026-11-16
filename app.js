@@ -7,7 +7,7 @@ const DAVIS=[0.79,0.0064,0.000076];        // N per kN of train weight: a + b·V
 // Steady running at 350 km/h with the default train, traction only: [kWh per km at the overhead line, Wh per seat-km]. Quoted in the texts on the calibration.
 const cruise350=()=>{const V=350,k=CTL.mass.def*G*(DAVIS[0]+DAVIS[1]*V+DAVIS[2]*V*V)/CTL.eta.def/3600;return [k,k*1000/SEATS];};
 const TRAIN_LIFE_YR=30, AIRCRAFT_CYCLES=40000; // service lives used to spread manufacturing carbon
-const TURNAROUND_MIN=30, SERVICE_HOURS=18, N_REF=4; // reference service: Halim – Karawang – Padalarang – Tegalluar
+const TURNAROUND_MIN=30, SERVICE_HOURS=18, HEADWAY_MIN=3, N_REF=4; // reference service: Halim – Karawang – Padalarang – Tegalluar
 // Routes: the three alternatives of KCIC's pre-feasibility study (the first is the default) and the other combinations of its corridors.
 // useRoute() points these at the chosen one; everything below reads them.
 const ROUTES=ROUTE.routes, ROUTE_DEF="south";
@@ -52,6 +52,7 @@ const N_DYN=LK("Kontan — Whoosh dynamic pricing from Rp 150,000","https://moms
 const N_TBA=LK("Hukumonline — fare ceiling and floor for Jakarta–Surabaya under KM 106/2019","https://www.hukumonline.com/berita/a/kemenhub-diminta-tegas-atur-tarif-tiket-pesawat-lt5ce919e3436df/");
 const N_FUXING=LK("China Daily — Fuxing uses about 3.8 kWh per 100 passenger-km at 350 km/h","https://covid-19.chinadaily.com.cn/m/qingdao/2017-09/29/content_33316825.htm");
 const N_JCM=LK("JCM / GEC — grid emission factors for Indonesia","https://gec.jp/innovation/R4/T.CO2EmissionFactor_20220406.pdf");
+const N_HEADWAY=LK("Railway Sciences — train arrival headway on high-speed railways, with the traffic of the Beijing–Shanghai line","https://emerald.com/insight/content/doi/10.1108/RS-03-2024-0007");
 const WHOOSH=LK("Wikipedia — High-speed rail in Indonesia (Whoosh)",W_+"High-speed_rail_in_Indonesia");
 const HSR=LK("Wikipedia — High-speed rail",W_+"High-speed_rail");
 const REFS={
@@ -89,8 +90,11 @@ const REFS={
  tpre:{t:"Time at the station before departure",l:[WHOOSH,LK("Wikipedia — Train station",W_+"Train_station")]},
  vot:{t:"Value of travel time",d:"What an hour of the traveller's time is worth. It converts the time difference into money so that time and price can be compared in one number, the generalised cost.",l:[LK("Wikipedia — Value of time",W_+"Value_of_time"),LK("Wikipedia — Generalised cost",W_+"Generalised_cost"),LK("Wikipedia — Economy of Indonesia",W_+"Economy_of_Indonesia")]},
  capex:{t:"Construction cost per km",d:"All-in cost of the new line per route-km, including stations and systems. The first Whoosh line cost about US$7.3 billion for 142.3 km, or US$51 million per km, with long tunnels and viaducts. Chinese domestic lines have cost roughly US$17–21 million per km.",l:[WHOOSH,LK("Wikipedia — Kereta Cepat Indonesia China",W_+"Kereta_Cepat_Indonesia_China"),LK("Wikipedia — High-speed rail in China",W_+"High-speed_rail_in_China"),N_SCMP]},
- trains:{t:"Trains per day",d:"Departures per direction per day. Whoosh has run between 40 and 62 trips a day in total, or 20–31 each way.",l:[WHOOSH,LK("Wikipedia — Headway",W_+"Headway")]},
+ trains:{t:"Trains per day",d:"Departures per direction per day. Whoosh has run between 40 and 62 trips a day in total, or 20–31 each way. The slider ends at the line's ceiling: the departures that the shortest headway allows in a service day with the chosen stops, as in the capacity card. When the ceiling falls below the trains set, the trains follow it down.",l:[WHOOSH,LK("Wikipedia — Headway",W_+"Headway")]},
  lf:{t:"Train load factor",d:"Share of seat-kilometres sold over the whole line. Whoosh carries about 6 million passengers a year.",l:[LK("Wikipedia — Passenger load factor",W_+"Passenger_load_factor"),WHOOSH]},
+ headway:{t:"Shortest headway between trains",d:"The closest two trains can follow each other at line speed. The train behind needs its whole braking distance clear ahead of it, plus margins, and the approaches to stations take longer to clear than open track. CTCS-3, the signalling of China's 350 km/h lines, is designed for 3 minutes. Timetables there are mostly drawn at 5 minutes, and at 4 on some sections. This slider sets the ceiling in the capacity card, which is also where the trains slider above it ends.",l:[LK("Wikipedia — Headway",W_+"Headway"),LK("Wikipedia — Chinese Train Control System",W_+"Chinese_Train_Control_System"),LK("Wikipedia — Beijing–Shanghai high-speed railway",W_+"Beijing–Shanghai_high-speed_railway"),N_HEADWAY]},
+ flights:{t:"Flights per day",d:"Scheduled Jakarta–Surabaya departures per direction, from Halim and Soekarno–Hatta together. Schedules list roughly 28–31 a day from Soekarno–Hatta and 9–10 from Halim. A published ranking puts the Soekarno–Hatta route alone at about 375,000 seats a month in both directions, which fits. Used only for the capacity comparison; the share flown from each airport is its own slider.",l:[LK("Wikipedia — Soekarno–Hatta International Airport",W_+"Soekarno–Hatta_International_Airport"),LK("Wikipedia — Halim Perdanakusuma International Airport",W_+"Halim_Perdanakusuma_International_Airport"),LK("Wikipedia — List of busiest passenger flight routes",W_+"List_of_busiest_passenger_flight_routes"),LK("Aviation A2Z — busiest domestic routes in Southeast Asia","https://aviationa2z.com/index.php/2025/01/27/busiest-domestic-routes-in-southeast-asia/"),LK("FlightsFrom — HLP–SUB schedule","https://www.flightsfrom.com/HLP-SUB")]},
+ sec_cap:{t:"Capacity of the line",d:"How many trains and seats the line could carry if demand were no limit. The headway gives the trains per hour; each train must also finish its run inside the 18-hour service day, so a longer ride leaves fewer departures. When every train makes the same stops, that is all that stops cost. A fixed fleet loses more, because each trainset makes fewer trips a day. A timetable that mixes patterns loses most. A stopping train falls behind while it brakes and accelerates, so the express behind it needs a longer gap, and at each stop it stands until that express has passed and a headway has gone by. The figure here alternates the chosen pattern with expresses; it is a first-order estimate, not a constructed timetable. Seats are those of one 8-car set; two sets coupled would double them where platforms are long enough. For scale, the Tokaido Shinkansen runs up to 17 trains an hour in three stopping patterns, and the busiest section of the Beijing–Shanghai line carries 188 pairs of trains a day. The flights are counted as seats on today's schedule, not as what the runways could handle.",l:[LK("Wikipedia — Route capacity",W_+"Route_capacity"),LK("Wikipedia — Headway",W_+"Headway"),LK("Wikipedia — Tokaido Shinkansen",W_+"Tokaido_Shinkansen"),LK("Wikipedia — Beijing–Shanghai high-speed railway",W_+"Beijing–Shanghai_high-speed_railway"),N_HEADWAY,LK("JR Central — about the Shinkansen","https://global.jr-central.co.jp/en/company/about_shinkansen")]},
  opex_train:{t:"Train operating cost",d:"Crew, cleaning, train maintenance and the capital cost of the trainsets, per train-kilometre, excluding traction energy, which is computed separately.",l:[LK("Wikipedia — Operating expense",W_+"Operating_expense"),HSR,LK("Wikipedia — China Railway CR400AF (parent of the KCIC400AF)",W_+"China_Railway_CR400AF")]},
  opex_infra:{t:"Infrastructure maintenance",d:"Track, overhead line, signalling and structures, per route-km per year.",l:[LK("Wikipedia — Track (rail transport), maintenance",W_+"Railway_track"),LK("Wikipedia — Overhead line",W_+"Overhead_line"),HSR]},
  elec:{t:"Electricity price",l:[LK("Wikipedia — Perusahaan Listrik Negara",W_+"Perusahaan_Listrik_Negara"),LK("Wikipedia — Energy in Indonesia",W_+"Energy_in_Indonesia")]},
@@ -131,6 +135,7 @@ const REFS={
  r_verdictT:{t:"Traveller's verdict",d:"Compares generalised cost: fare, offset surcharge and the value of door-to-door time. The flight side is the average of the Halim and Soekarno–Hatta flights, weighted by each airport's share of flights; the comparison table shows each airport on its own. Train wins below 90 % of the flight's cost, flight wins above 110 %, anything between is a toss-up.",l:[LK("Wikipedia — Generalised cost",W_+"Generalised_cost"),LK("Wikipedia — Value of time",W_+"Value_of_time"),HSR]},
  r_verdictI:{t:"Investor's verdict",d:"Does the extension's fare revenue cover its operating cost and the annual payment on its construction cost? Coverage of 100 % or more pays for itself; an operating surplus that covers only part of the capital needs public money; revenue below operating cost loses money on every train.",l:[LK("Wikipedia — Farebox recovery ratio",W_+"Farebox_recovery_ratio"),LK("Wikipedia — Capital recovery factor",W_+"Capital_recovery_factor"),N_SCMP]},
  r_verdictP:{t:"Planet's verdict",d:"Compares CO₂e per passenger after offsets, including a share of construction carbon for the train. Within ±15 % is no clear winner.",l:[LK("Wikipedia — Environmental impact of aviation",W_+"Environmental_impact_of_aviation"),LK("Wikipedia — Life-cycle assessment",W_+"Life-cycle_assessment"),N_JCM]},
+ r_verdictC:{t:"Capacity verdict",d:"Compares the seats the line could offer in a day, each direction, at the shortest headway and with the chosen stops, with the seats on today's Jakarta–Surabaya flights from both airports. Within ±15 % is no clear winner. It sets a ceiling against a schedule: the line's figure is what the signalling allows, not what would be run or filled, and the flights' figure is what the airlines fly today, not what the runways could take. The second sentence gives the same comparison for the trains of the trains slider.",l:[LK("Wikipedia — Route capacity",W_+"Route_capacity"),LK("Wikipedia — Headway",W_+"Headway"),LK("Wikipedia — List of busiest passenger flight routes",W_+"List_of_busiest_passenger_flight_routes")]},
 };
 // Inputs that share an explanation with their counterpart at the other end of the trip, or with their switch.
 REFS.fegr=REFS.facc; REFS.tegr=REFS.tacc; REFS.oshare=REFS.offset;
@@ -187,6 +192,7 @@ const CTLS=[
  {g:"Fares",id:"fx",label:"Exchange rate",min:14000,max:22000,step:100,def:18200,fmt:v=>"Rp "+fmtNum(v,0)+" / US$",note:"About Rp 18,170 per US$ on 12 November 2026."},
 
  {g:"Flights to SUB",id:"cgkshare",label:"Share of flights leaving from CGK",min:0,max:1,step:0.05,def:0.75,fmt:P0,note:"Weights the average flight. Schedules list roughly 28–31 daily flights from Soekarno–Hatta against 9–10 from Halim; 0% compares against Halim only, 100% against Soekarno–Hatta only."},
+ {g:"Flights to SUB",id:"flights",label:"Flights per day, each direction, both airports",min:10,max:100,step:1,def:40,fmt:v=>v+" flights",note:"Used for the capacity comparison. Schedules list roughly 28–31 a day from Soekarno–Hatta and 9–10 from Halim."},
  {g:"Flights to SUB",id:"ffare",label:"HLP–SUB fare, one way, all-in",min:400000,max:2500000,step:25000,def:1000000,fmt:v=>fmtRp(v),note:"Regulated economy range for Jakarta–Surabaya: Rp 408,000 to Rp 1,167,000 before tax and airport charge. Booking sites in 2026 show monthly averages of Rp 740,000–1,110,000, with Garuda near Rp 1.3 million at peak."},
  {g:"Flights to SUB",id:"cfare",label:"CGK–SUB fare, one way, all-in",min:400000,max:2500000,step:25000,def:1000000,fmt:v=>fmtRp(v),note:"Same regulated band and the same default: Citilink prices the two airports about the same."},
  {g:"Flights to SUB",id:"fsur",label:"Government surcharge on each flight ticket",min:0,max:3000000,step:25000,def:0,fmt:v=>v?fmtRp(v):"none",note:"A levy on every Jakarta–Surabaya air ticket, on top of the airline's fare, to push travellers to the train and leave flying as the premium option."},
@@ -205,7 +211,8 @@ const CTLS=[
  {g:"Door to door",id:"vot",label:"Value of the traveller's time",min:0,max:500000,step:10000,def:100000,fmt:v=>fmtRp(v)+" / h",note:"Turns minutes into rupiah for the verdict. 0 = only the price matters."},
 
  {g:"Economics",id:"capex",label:"Construction cost of the extension",min:10,max:70,step:1,def:30,fmt:v=>"US$"+v+" M / km",note:"The first Whoosh line: about US$51 M/km. Chinese domestic lines: US$17–21 M/km."},
- {g:"Economics",id:"trains",label:"Trains per day, each direction",min:6,max:60,step:1,def:24,fmt:v=>v+" trains",note:"Whoosh runs 20–31 each way per day."},
+ {g:"Economics",id:"trains",label:"Trains per day, each direction",min:6,max:SERVICE_HOURS*60/HEADWAY_MIN,step:1,def:24,dynMax:true,fmt:v=>v+" trains",note:"Whoosh runs 20–31 each way per day."}, // max: one train per shortest headway all day; update() lowers it to the line's ceiling
+ {g:"Economics",id:"headway",label:"Shortest headway between trains",min:HEADWAY_MIN,max:10,step:0.5,def:5,fmt:v=>v+" min",note:"Sets the line's ceiling: the capacity card and the upper end of the trains slider. The signalling is designed for 3 minutes; Chinese 350 km/h timetables mostly use 5."},
  {g:"Economics",id:"lf",label:"Train load factor",min:0.2,max:1,step:0.01,def:0.65,fmt:P0,note:"Share of seat-km sold along the whole line."},
  {g:"Economics",id:"opex_train",label:"Train operating cost, excl. energy",min:3,max:40,step:1,def:12,fmt:v=>"US$"+v+" / train-km",note:"Crew, maintenance and the capital cost of trainsets."},
  {g:"Economics",id:"opex_infra",label:"Infrastructure maintenance",min:30,max:300,step:10,def:120,fmt:v=>"US$"+v+"k / km / yr"},
@@ -249,7 +256,7 @@ const PRESETS=[
 const presetStops=p=>p.stops==="all"?ALL:p.stops==="none"?[]:p.stops==="key"?[RT.key]:DEFAULT_STOPS;
 const state={}, stops=new Set(DEFAULT_STOPS);
 function ctlVal(c){const el=document.getElementById("in_"+c.id);if(c.type==="toggle")return el.checked?1:0;const raw=parseFloat(el.value);const v=c.log?Math.pow(10,raw):raw;return c.snap?c.snap(v):v;}
-function setCtl(c,raw){const el=document.getElementById("in_"+c.id);if(c.type==="toggle")el.checked=!!+raw;else el.value=raw;}
+function setCtl(c,raw){const el=document.getElementById("in_"+c.id);if(c.type==="toggle")el.checked=!!+raw;else{if(c.dynMax)el.max=c.max;el.value=raw;}} // dynMax: update() sets the real maximum afterwards
 function buildControls(){
   const aside=document.getElementById("controls");
   [...new Set(CTLS.map(c=>c.g))].forEach((g,gi)=>{
@@ -370,9 +377,9 @@ function model(s,stopSet){
   }
   m.Etrac=Et/s.eta/3.6e6; m.Eregen=Er*s.regen*s.eta/3.6e6; m.Eaux=s.aux*totalSec/3600; m.E=m.Etrac-m.Eregen+m.Eaux; // kWh
   m.Rmax=tr.R(tr.vmax); m.Pcruise=m.Rmax*tr.vmax; m.resid=tr.acc(tr.vmax);
-  { let v=0,t=0,d=0;const dt=0.5;while(v<tr.vmax-0.01&&t<3600){const a=tr.acc(v);if(a<=1e-4)break;v=Math.min(tr.vmax,v+a*dt);d+=v*dt;t+=dt;} m.t0=t;m.d0=d/1000;m.reaches=v>=tr.vmax-0.02; }
+  { let v=0,t=0,d=0;const dt=0.5;while(v<tr.vmax-0.01&&t<3600){const a=tr.acc(v);if(a<=1e-4)break;v=Math.min(tr.vmax,v+a*dt);d+=v*dt;t+=dt;} m.t0=t;m.d0=d/1000;m.reaches=v>=tr.vmax-0.02;m.vtop=v; }
   m.brakeKm=tr.vmax*tr.vmax/(2*tr.dec)/1000;
-  { let pen=0,cnt=0;const e=journey(MUST_IDX).T;if(m.nStops>N_MUST){pen=(J.T-e)/(m.nStops-N_MUST)/60;} m.stopPenalty=pen; m.Texpress=e/60; }
+  { let pen=0,cnt=0;const e=journey(MUST_IDX).T;if(m.nStops>N_MUST){pen=(J.T-e)/(m.nStops-N_MUST)/60;} m.stopPenalty=pen; m.Texpress=e/60; m.Tall=journey(ST.map((x,i)=>i)).T/60; }
   // flight
   // two legs into Juanda: from Halim (HLP) and from Soekarno–Hatta (CGK). m.air, m.d2dAir, m.fareAir are the averages weighted by each airport's share of flights.
   m.paxAir=s.seatsair*s.lfair; const wC=s.cgkshare, wH=1-wC;
@@ -385,7 +392,18 @@ function model(s,stopSet){
   // train emissions
   m.paxRail=SEATS*s.lf; m.ridersYr=s.trains*2*365*m.paxRail; m.trainsYr=s.trains*2*365;
   m.rail={trac:(m.Etrac-m.Eregen)*s.grid/1000/m.paxRail,aux:m.Eaux*s.grid/1000/m.paxRail,emb:s.infraco2*m.L*1000/s.clife/m.ridersYr};
-  m.sets=Math.ceil(s.trains*2*(m.Tmin+TURNAROUND_MIN)/60/SERVICE_HOURS*1.1);
+  const setsFor=(n,T)=>Math.ceil(n*2*(T+TURNAROUND_MIN)/60/SERVICE_HOURS*1.1); // trainsets to run n trains each way of T minutes
+  m.sets=setsFor(s.trains,m.Tmin);
+  // capacity: the most trains the headway allows inside the service day, against the seats on the flights
+  { const day=SERVICE_HOURS*60,h=s.headway,nOpt=m.nStops-N_MUST;
+    const at=(T,n)=>{const dep=Math.max(0,Math.floor((day-T)/h)+1),trips=day/((T+TURNAROUND_MIN)*1.1);return {T,n,dep,seats:dep*SEATS,trips,setSeats:trips*SEATS,sets:setsFor(dep,T)};};
+    const c=m.cap={cur:at(m.Tmin,m.nStops),exp:at(m.Texpress,N_MUST),all:at(m.Tall,ST.length)};
+    // Stopping trains alternating with expresses, each overtaken at every optional stop. Against a train passing at line speed the stopper
+    // loses "lost" minutes braking and accelerating, and it stands until the express has passed and a headway has gone by: one cycle of two trains per stop.
+    c.lost=(m.t0-m.d0*1000/m.vtop+m.vtop/(2*tr.dec))*(1+s.pad)/60;
+    if(nOpt>0){const wait=Math.max(s.dwell,2*h),tph=120/(c.lost+wait),Tstop=m.Tmin+nOpt*(wait-s.dwell),dep=Math.max(0,Math.floor((day-(Tstop+m.Texpress)/2)*tph/60)+1);c.mix={wait,tph,Tstop,dep,seats:dep*SEATS};}
+    c.airSeats=s.flights*s.seatsair; c.airPax=c.airSeats*s.lfair; c.airPaxYr=c.airPax*2*365;
+  }
   m.rail.veh=m.sets*s.trainco2*1000/TRAIN_LIFE_YR/m.ridersYr;            // building the trainsets, spread over their service life
   m.rail.op=m.rail.trac+m.rail.aux; m.rail.gross=m.rail.op+m.rail.emb+m.rail.veh;
   // offsets
@@ -439,12 +457,9 @@ function model(s,stopSet){
   m.vP=(m.rail.net<0.5&&m.air.net<0.5)?{cls:"mid",big:"Neutralised on paper",why:"Both modes offset all their emissions with full-integrity credits."}
     :{cls:er<0.85?"good":er<=1.15?"mid":"bad",big:er<0.85?"Train is cleaner":er<=1.15?"No clear winner":"Flying emits less",
     why:`Train <b>${fmtKg(m.rail.net)}</b> vs flight <b>${fmtKg(m.air.net)}</b> CO₂e per passenger${on?" after offsets":""}. ${m.rail.emb>m.rail.op?"Building the line outweighs running the trains.":s.grid>=600?"A coal-heavy grid keeps the train's footprint high.":"Electricity is cleaner than jet fuel here."}`};
-  const okT=m.vT.cls!=="bad";
-  m.overall=okT&&m.vI.cls==="good"?{cls:"good",big:"Feasible",why:"Competitive with the flight and able to repay its construction from fares."}
-    :okT&&m.vI.cls==="mid"?{cls:"mid",big:"Feasible as a service, not as an investment",why:"Travellers would use it, and fares cover the running costs, but not the construction. It needs the state to carry most of the capital, as it did for the first line."}
-    :okT?{cls:"bad",big:"Attractive to travellers, unaffordable to run",why:"Competitive with the flight at this fare, but the fare does not even cover operating costs."}
-    :m.vI.cls==="good"?{cls:"mid",big:"Pays its way, but loses to the flight",why:"At these settings most end-to-end travellers would still fly; the line would live on intermediate cities."}
-    :{cls:"bad",big:"Not feasible at these settings",why:"It loses to the flight on time and price, and fares do not repay the line."};
+  { const c=m.cap,r=c.airSeats>0?c.cur.seats/c.airSeats:Infinity,x=v=>fmtNum(v,v<10?1:0)+"×"; // the line's ceiling against the seats on today's flights
+    m.vC={cls:r>1.15?"good":r>=0.85?"mid":"bad",big:r>1.15?"Train carries more":r>=0.85?"No clear winner":"Flights carry more",
+      why:`At a ${s.headway}-minute headway the line could offer <b>${fmtNum(c.cur.seats,0)}</b> seats a day each way, <b>${x(r)}</b> the ${fmtNum(c.airSeats,0)} on today's ${s.flights} flights. The ${s.trains} trains a day of the trains slider offer <b>${x(s.trains*SEATS/c.airSeats)}</b> the flights' seats and use ${pct(c.cur.dep>0?s.trains/c.cur.dep:Infinity)} of that ceiling.`}; }
   return m;
 }
 
@@ -455,7 +470,7 @@ function kv(rows){return`<table class="kv">${rows.map(r=>`<tr${r[3]?' class="tot
 function cmp(heads,rows){return`<div class="cmpwrap"><table class="cmp"><tr><th></th>${heads.map(h=>`<th class="${h[1]}">${h[0]}</th>`).join("")}</tr>${rows.map(r=>`<tr${r[3]?' class="total"':''}><td>${r[0]}${r[2]?`<span class="f">${r[2]}</span>`:""}</td>${r[1].map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</table></div>`;}
 // horizontal stacked bars: rows=[{label,segs:[[name,value,color]],total?}]
 function hbars(rows,fmt,opts={}){
-  const W=560,LW=opts.lw||70,RW=opts.rw||110,pw=W-LW-RW,bh=opts.bh||26,gap=14,top=6;
+  const W=opts.w||560,LW=opts.lw||70,RW=opts.rw||110,pw=W-LW-RW,bh=opts.bh||26,gap=14,top=6;
   const max=Math.max(...rows.map(r=>r.segs.reduce((a,x)=>a+Math.max(0,x[1]),0)),opts.min||1e-9)*1.02;
   const H=top+rows.length*(bh+gap)+(opts.axis?18:0);
   let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">`;
@@ -478,16 +493,20 @@ function update(){
   CTLS.forEach(c=>{state[c.id]=ctlVal(c);const o=document.getElementById("out_"+c.id);if(o)o.textContent=c.fmt(state[c.id]);});
   CTLS.forEach(c=>{if(c.dep)document.getElementById("ctl_"+c.id).classList.toggle("off",!state[c.dep]);});
   document.querySelectorAll("#stopList input").forEach(el=>{if(!el.disabled)el.checked=stops.has(el.dataset.stop);});
-  const s=state,m=M=model(s,stops);
+  const s=state;let m=M=model(s,stops);
+  { // the trains slider ends at the line's ceiling, which moves with the headway, the stops and the running time
+    const c=CTL.trains,el=document.getElementById("in_trains"),top=Math.max(c.min,m.cap.cur.dep);
+    el.max=top;
+    if(s.trains>top){el.value=top;s.trains=ctlVal(c);document.getElementById("out_trains").textContent=c.fmt(s.trains);m=M=model(s,stops);}
+    document.getElementById("note_trains").textContent=c.note+" The slider ends at the line's ceiling: "+fmtNum(top,0)+" departures a day with this headway and these stops.";
+  }
   ST.forEach((x,i)=>{document.getElementById("km_"+x.id).textContent="km "+fmtNum(m.pos[i],0);});
   document.getElementById("stopCount").textContent=m.nStops+" of "+ST.length+" stations";
   scheduleURL();
   const fx=s.fx, usd=v=>fmtUSD(v/fx);
 
-  document.getElementById("overall").className="overall "+m.overall.cls;
-  document.getElementById("overall").innerHTML=`<div class="lab">Is the route feasible?</div><div class="big">${m.overall.big}</div><div class="why">${m.overall.why}</div>`;
   const vc=(v,lab,g,ref)=>`<div class="vcard ${v.cls}">${glyph(g)}<div><div class="lab">${lab}${refBtn(ref)}</div><div class="big">${v.big}</div><div class="why">${v.why}</div></div></div>`;
-  document.getElementById("verdicts").innerHTML=vc(m.vT,"Traveller's verdict · train vs flights from HLP and CGK","door","r_verdictT")+vc(m.vI,"Investor's verdict · the extension","economics","r_verdictI")+vc(m.vP,"Planet's verdict · CO₂ per passenger","environment","r_verdictP");
+  document.getElementById("verdicts").innerHTML=vc(m.vT,"Traveller's verdict · train vs flights from HLP and CGK","door","r_verdictT")+vc(m.vI,"Investor's verdict · the extension","economics","r_verdictI")+vc(m.vP,"Planet's verdict · CO₂ per passenger","environment","r_verdictP")+vc(m.vC,"Capacity verdict · seats per day, each direction","train","r_verdictC");
 
   const dT=m.d2dRail.total-m.d2dAir.total,[H,C]=m.legs;
   document.getElementById("hero").innerHTML=
@@ -628,9 +647,56 @@ function update(){
         ["Yearly shortfall",m.cover>=1?"none":fmtRp(m.cost-m.rev),m.cover>=1?"":usd(m.cost-m.rev)+" per year to be found elsewhere"],
         ["Break-even fare, Jakarta–Surabaya",fmtRp(m.beFare),"fare × full cost ÷ revenue, at the same ridership"+(m.beFare>m.fareAir?" · above the average flight fare":"")],
         ["Break-even load factor",m.beLF<=1?pct(m.beLF):"> 100 %"+flag("not reachable","bad"),"at the current fare and train count"],
-      ])}</div></div></div>`;
+      ])}</div></div></div>`+capCard(m,s);
 
   drawSpeed(m,s);drawD2D(m,s);drawGC(m,s);drawCO2(m,s);drawPatterns(m,s);drawSens(m,s);drawEcon(m,s);drawPeers(m,s);drawMap(m,s);drawRoutes(m,s);
+}
+
+// ---------- capacity card ----------
+// The line's ceiling under the headway slider, the flights for scale, and what stops cost: little of the ceiling, more of a fixed fleet, most in a mixed timetable.
+function capCard(m,s){
+  const c=m.cap,q=c.cur,h=s.headway,hd=(col,t)=>`<div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:${col};margin-bottom:4px;font-weight:600">${t}</div>`;
+  const rel=(a,b)=>{const r=b>0?a/b-1:0;return (r<=-0.005?"−":r>=0.005?"+":"")+pct(Math.abs(r));}, P=[c.exp,q,c.all];
+  const bars=[{label:"Line's ceiling",color:C_RAIL,segs:[["Train",q.seats,C_RAIL]]},
+    ...(c.mix?[{label:"Mixed patterns",color:C_RAIL,segs:[["Train",c.mix.seats,C_RAIL]]}]:[]),
+    {label:"Trains slider",color:C_RAIL,segs:[["Train",s.trains*SEATS,C_RAIL]]},
+    {label:"Flights",color:C_AIR,segs:[["Flight",c.airSeats,C_AIR]]}];
+  return `<div class="card" style="grid-column:1/-1"><h2>${ico("train")}Capacity of the line${refBtn("sec_cap")}<span>what the headway allows, against the seats on the Jakarta–Surabaya flights · each direction</span></h2>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px">
+      <div>${hd("var(--rail)","The line at its ceiling")}${kv([
+        ["Shortest headway"+refBtn("headway"),h+" min",fmtNum(60/h,1)+" trains per hour"],
+        ["Departures per day",fmtNum(q.dep,0),"("+SERVICE_HOURS+" h service day − "+fmtDur(m.Tmin)+" ride) ÷ headway + 1"],
+        ["Seats per day",fmtNum(q.seats,0),fmtNum(q.dep,0)+" trains × "+SEATS+" seats",true],
+        ["Seats per year, both directions",fmtNum(q.seats*730/1e6,1)+" M","× 2 × 365"],
+        ["Trainsets to run it",fmtNum(q.sets,0)+" sets","same rule as in the economics · Whoosh owns 11"],
+        ["Used at the trains slider"+refBtn("trains"),pct(q.dep>0?s.trains/q.dep:Infinity)+(s.trains>q.dep?flag("over the ceiling","bad"):""),s.trains+" of "+fmtNum(q.dep,0)+" departures"],
+        ...(c.mix?[
+          ["Alternating with expresses",fmtNum(c.mix.tph,1)+" trains per hour","2 trains per "+fmtNum(c.lost+c.mix.wait,1)+" minutes: "+fmtNum(c.lost,1)+" lost braking and accelerating + "+fmtNum(c.mix.wait,1)+" standing while an express passes"],
+          ["Seats per day in that timetable",fmtNum(c.mix.seats,0),pct(q.seats>0?c.mix.seats/q.seats:0)+" of the ceiling · the stopping train takes "+fmtDur(c.mix.Tstop)],
+        ]:[["Alternating with expresses","–","this pattern is the express; add optional stops to see a mixed timetable"]]),
+      ])}</div>
+      <div>${hd("var(--air)","The flights, HLP and CGK together")}${kv([
+        ["Flights per day"+refBtn("flights"),fmtNum(s.flights,0),"scheduled departures to Juanda"],
+        ["Seats per day",fmtNum(c.airSeats,0),s.flights+" flights × "+s.seatsair+" seats",true],
+        ["Passengers per day"+refBtn("lfair"),fmtNum(c.airPax,0),"seats × "+pct(s.lfair)+" load factor"],
+        ["Passengers per year, both directions",fmtNum(c.airPaxYr/1e6,1)+" M","× 2 × 365"],
+        ["One train, in flights",fmtNum(SEATS/s.seatsair,1),SEATS+" ÷ "+s.seatsair+" seats"],
+        ["Trains per day that would carry every air passenger",fmtNum(c.airPax/m.paxRail,1),fmtNum(c.airPax,0)+" ÷ ("+SEATS+" × "+pct(s.lf)+")"],
+        ["The line's ceiling against the flights",fmtNum(q.seats/c.airSeats,q.seats<10*c.airSeats?1:0)+"×","seats per day ÷ seats per day"],
+        ["Riders at the trains slider against air passengers"+refBtn("lf"),fmtNum(m.ridersYr/c.airPaxYr,1)+"×",fmtNum(m.ridersYr/1e6,1)+" M ÷ "+fmtNum(c.airPaxYr/1e6,1)+" M per year · riders are end-to-end equivalents"],
+      ])}</div>
+      <div>${hd("var(--text-2)","What stops cost")}${cmp([["Express","a3"],["These stops","r"],["Every station","a3"]],[
+        ["Stations served",P.map(x=>x.n)],
+        ["Jakarta → Surabaya",P.map(x=>fmtDur(x.T))],
+        ["Departures per day at the ceiling",P.map(x=>fmtNum(x.dep,0))],
+        ["Seats per day at the ceiling",P.map(x=>fmtNum(x.seats,0)),"",true],
+        ["against express",P.map(x=>x===c.exp?"–":rel(x.seats,c.exp.seats))],
+        ["Trips per trainset per day",P.map(x=>fmtNum(x.trips,1)),SERVICE_HOURS+" h ÷ (ride + "+TURNAROUND_MIN+" min turnaround), less 10 % spare"],
+        ["Seats per trainset per day",P.map(x=>fmtNum(x.setSeats,0)),"what a fixed fleet can offer",true],
+        ["against express",P.map(x=>x===c.exp?"–":rel(x.setSeats,c.exp.setSeats))],
+      ])}
+      <div style="margin-top:12px">${hd("var(--text-2)","Seats per day, each direction")}${hbars(bars,v=>fmtNum(v,0),{w:400,lw:122,rw:62,bh:20})}</div></div>
+      </div></div>`;
 }
 
 // ---------- charts ----------
@@ -888,9 +954,10 @@ const NOTES=()=>[
  `<b>Flights.</b> Two legs into Juanda: from Halim Perdanakusuma (${fmtNum(GC_KM,0)} km great circle) and from Soekarno–Hatta (${fmtNum(GC_CGK,0)} km). Each has its own fare, block time and city-to-airport time; check-in, baggage and the Surabaya end are shared. Verdicts, the carbon payback and the charts' reference lines use the average weighted by the share of flights from each airport. The fare is an input because it varies several-fold by airline, season and booking time within the regulated band. Fuel = fixed take-off and landing fuel + cruise burn × distance flown. CO₂ = fuel × 3.16 kg/kg, times a life-cycle multiplier for fuel production, with an optional multiplier for non-CO₂ warming applied to combustion only.`,
  `<b>Traveller's verdict.</b> Generalised cost = ticket + flight surcharge, if one is set + offset surcharge + value of time × door-to-door hours. The train wins below 90 % of the flight's generalised cost and loses above 110 %. Comfort, reliability, luggage, frequency and the chance of working on board are not priced. The market-share figure is a separate rule of thumb based only on the length of the train ride.`,
  `<b>Investor's verdict.</b> Only the new line is costed. Revenue is riders × fare × the extension's share of the route length, with riders = trains × seats × load factor, counted as end-to-end equivalents. Costs are traction electricity, a per-train-km operating cost, a per-km maintenance cost, and the construction cost turned into a level yearly payment with a capital recovery factor. Land acquisition risk, construction delay, ramp-up years, non-fare income, tax and the debt of the first line are not modeled. Ridership is an input; it is not derived from the fare or the travel time.`,
+ `<b>Capacity.</b> The ceiling is one train per headway, for as long as a train can still finish its run inside the ${SERVICE_HOURS}-hour service day: departures = (${SERVICE_HOURS} h − ride) ÷ headway + 1, each with ${SEATS} seats. A trainset makes ${SERVICE_HOURS} h ÷ (ride + ${TURNAROUND_MIN} min turnaround) one-way trips a day, less 10 % spare, which is what a fixed fleet can offer. For a mixed timetable the chosen pattern alternates with expresses and is overtaken at every optional stop: each stop then costs the stopping train the time lost braking and accelerating plus two headways standing, or its dwell if that is longer, and two trains run per such cycle. This is a first-order estimate, not a constructed timetable; station tracks, the terminals and short workings are ignored. The flights are the seats on today's schedule from both Jakarta airports, not what the runways could handle. The capacity verdict sets the ceiling against those seats, with ±15 % counted as no clear winner. Who would fill the seats is not modeled.`,
  `<b>Planet's verdict.</b> CO₂e per passenger after offsets, train against flight, with ±15 % counted as no clear winner. The train carries the electricity it uses at the grid's intensity plus a share of the carbon emitted to build the whole line, spread over the carbon accounting period and all riders, plus the trainsets over 30 years. The flight carries a share of building the aircraft (over 40,000 flights) and the two airports. Carbon payback counts only riders who would otherwise have flown, credits the avoided fuel and aircraft but not the airports, which already exist, and charges the train its electricity and trainsets.`,
  `<b>Offsets.</b> When switched on, both modes buy credits for the chosen share of their gross emissions at one price, and the cost is added to each ticket. Only share × integrity is taken off the emissions shown, so cheap low-integrity credits change the price a little and the verdict less. Because both modes offset the same share, their ratio does not change; offsets matter here through the surcharge, which is larger for whichever mode emits more.`,
- `<b>Not modeled.</b> What separates the routes besides length and stops: terrain, tunnels and viaducts (one cost per km is applied to all of them) and the population each would serve. Also a Surabaya terminus nearer the centre, track capacity and mixed stopping patterns on one line, competition from the toll roads themselves and from conventional trains, future aircraft and fuel, and the grid getting cleaner over the asset life.`,
+ `<b>Not modeled.</b> What separates the routes besides length and stops: terrain, tunnels and viaducts (one cost per km is applied to all of them) and the population each would serve. Also a Surabaya terminus nearer the centre, a constructed timetable and the demand between intermediate cities, competition from the toll roads themselves and from conventional trains, future aircraft and fuel, and the grid getting cleaner over the asset life.`,
 ];
 
 // ---------- tooltip, modal ----------

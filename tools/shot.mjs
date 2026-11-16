@@ -15,7 +15,6 @@ page.on("pageerror", e => errs.push("pageerror: " + e.message));
 await page.goto("file://" + path.resolve("index.html") + (qs ? "?" + qs : ""), { waitUntil: "networkidle2", timeout: 60000 });
 await new Promise(r => setTimeout(r, 1500));
 const out = await page.evaluate(() => ({
-  overall: document.getElementById("overall").innerText,
   verdicts: [...document.querySelectorAll(".vcard")].map(v => v.innerText.replace(/\n+/g, " | ")),
   tiles: [...document.querySelectorAll(".tile")].map(v => v.innerText.replace(/\n+/g, " | ")),
   cards: [...document.querySelectorAll("#cards .card")].map(c => c.innerText),
