@@ -15,10 +15,11 @@ What it computes, live from the sliders:
 - CO₂ includes building the line, the trainsets, the aircraft and the airports, each on its own slider
 - Door-to-door time and cost against the flights from both Jakarta airports (HLP–SUB and CGK–SUB), each with its own configurable fare, block time and city-to-airport time, plus a slider for the share of flights leaving from CGK
 - An optional government surcharge on every flight ticket, with the surcharge at which the train ties the flight and the one at which the traveller's verdict turns to the train
-- Economics of building the Bandung–Surabaya section
+- Economics of building the Bandung–Surabaya section, with the fewest trains a day at which fares cover operations and the yearly payment on construction. The "Break-even" preset sets the trains slider to that number for the chosen route
 - Cost and benefit to society of that section: flying avoided, time gained or lost, the other riders' trips and CO₂ at a configurable value per tonne, against operating cost, construction and its carbon, giving a net benefit, a benefit–cost ratio and a rate of return. Fares and the flight surcharge are transfers and are left out. Wider effects (construction jobs, an economic multiplier, growth along the line, land values) are not counted: the model has no regional economy
 - Capacity of the line: the trains and seats the signalling headway allows, what stops cost (little at the ceiling, more for a fixed fleet, most when stopping patterns are mixed), and the seats on the Jakarta–Surabaya flights for scale
 - CO₂ per passenger for both modes, with optional carbon offsets
+- The least solar panel area whose yearly output equals the trains' yearly electricity, at a configurable solar yield
 - Four verdicts: traveller, investor, planet and capacity
 
 Every input and result has an "i" button with an explanation and references.
