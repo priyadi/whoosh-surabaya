@@ -257,6 +257,24 @@ const presetStops=p=>p.stops==="all"?ALL:p.stops==="none"?[]:p.stops==="key"?[RT
 const state={}, stops=new Set(DEFAULT_STOPS);
 function ctlVal(c){const el=document.getElementById("in_"+c.id);if(c.type==="toggle")return el.checked?1:0;const raw=parseFloat(el.value);const v=c.log?Math.pow(10,raw):raw;return c.snap?c.snap(v):v;}
 function setCtl(c,raw){const el=document.getElementById("in_"+c.id);if(c.type==="toggle")el.checked=!!+raw;else{if(c.dynMax)el.max=c.max;el.value=raw;}} // dynMax: update() sets the real maximum afterwards
+// A <details> opens and closes in a single frame, so its height is animated by hand. While it closes it stays open until
+// the animation ends; .closing turns the chevron back at once. A click during an animation reverses it from where it is.
+function animateDetails(d){
+  const s=d.querySelector("summary");let anim=null,want=d.open;
+  s.addEventListener("click",e=>{
+    if(!d.animate||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+    e.preventDefault();
+    const from=d.offsetHeight;
+    if(anim)anim.cancel();
+    want=anim?!want:!d.open;
+    d.classList.toggle("closing",!want);
+    if(want)d.open=true;
+    const to=want?d.offsetHeight:s.offsetHeight+d.offsetHeight-d.clientHeight; // closed: the summary plus the borders
+    d.style.overflow="hidden";
+    const a=anim=d.animate({height:[from+"px",to+"px"]},{duration:Math.max(160,Math.min(320,120+.3*Math.abs(to-from))),easing:"cubic-bezier(.2,0,0,1)"});
+    a.onfinish=()=>{if(anim!==a)return;anim=null;if(!want)d.open=false;d.classList.remove("closing");d.style.overflow="";};
+  });
+}
 function buildControls(){
   const aside=document.getElementById("controls");
   [...new Set(CTLS.map(c=>c.g))].forEach((g,gi)=>{
@@ -273,7 +291,7 @@ function buildControls(){
       body.appendChild(w);
       w.querySelector("input").addEventListener("input",()=>{markCustom();update();});
     });
-    aside.appendChild(d);
+    aside.appendChild(d);animateDetails(d);
   });
   const sel=document.getElementById("preset");
   sel.innerHTML=PRESETS.map((p,i)=>`<option value="${i}">${p.name}</option>`).join("")+`<option value="custom" hidden>Custom</option>`;

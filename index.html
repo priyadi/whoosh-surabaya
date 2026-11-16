@@ -36,8 +36,8 @@
   details{border:1px solid var(--border);border-radius:8px;margin-bottom:10px;background:var(--surface)}
   details summary{cursor:pointer;padding:9px 12px;font-weight:600;font-size:13.5px;list-style:none;display:flex;justify-content:space-between;align-items:center;user-select:none}
   details summary::-webkit-details-marker{display:none}
-  details summary::after{content:"▸";color:var(--muted);font-size:12px;transition:transform .15s}
-  details[open] summary::after{transform:rotate(90deg)}
+  details summary::after{content:"▸";color:var(--muted);font-size:12px;transition:transform .2s}
+  details[open]:not(.closing) summary::after{transform:rotate(90deg)}
   details .body{padding:4px 12px 12px}
   .ctl{margin:8px 0 10px}
   .ctl .row{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;gap:8px}
