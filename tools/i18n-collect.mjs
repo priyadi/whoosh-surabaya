@@ -34,7 +34,7 @@ const keys = await page.evaluate(async () => {
   document.getElementById("copyNote").textContent = "copied"; await tick();
   document.getElementById("copyNote").textContent = "copy the address bar"; await tick();
   // speed-chart tooltip texts
-  I18N.tr("built Whoosh line");
+  ["built Whoosh line", "rail 1 m", "ground 1 m", "gradient 1 ‰", "gradient -1 ‰"].forEach(x => I18N.tr(x));
   // drop texts that are only proper names (stations, city pairs), which stay as they are
   const names=[...ROUTES.flatMap(r=>[...r.stations.map(x=>x.name),...(r.kind==="kcic"?[r.name]:[]),"via "+r.via,...r.via.split(", ")]),...Object.values(SHORT),...PEERS.map(p=>p.n),"Tegalluar","Halim","Solo","Waru","HLP","CGK","SUB","OpenStreetMap","OSRM","Natural Earth","Jakarta–Bandung","Beijing–Shanghai","Jakarta–Surabaya"].sort((a,b)=>b.length-a.length);
   const bare=k=>{let t=k;for(const n of names)t=t.split(n).join("");return !/[A-Za-z]{2}/.test(t);};
