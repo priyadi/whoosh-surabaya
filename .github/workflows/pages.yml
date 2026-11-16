@@ -23,7 +23,7 @@ jobs:
       - name: Assemble site
         run: |
           mkdir _site
-          cp index.html favicon.svg whoosh-logo.svg \
+          cp index.html favicon.svg whoosh-logo.svg social.png \
              route-data.js lang-id.js i18n.js app.js _site/
           touch _site/.nojekyll
 

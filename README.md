@@ -55,6 +55,7 @@ The three KCIC alternatives come from the comparison map of KCIC's pre-feasibili
 | `app.js` | Model, charts, map, references |
 | `route-data.js` | Generated route geometry, stations, coastline |
 | `whoosh-logo.svg` | Whoosh wordmark shown in the page header |
+| `social.png` | Preview image for links shared on social media, drawn by `tools/social.mjs` |
 | `tools/` | Scripts that fetch-process the geometry and test the page |
 | `data/` | Inputs to `tools/build-route.mjs` |
 
@@ -64,6 +65,7 @@ The three KCIC alternatives come from the comparison map of KCIC's pre-feasibili
 node tools/stitch-hsr.mjs data/hsr_osm.json data/hsr_line.json   # built line from OpenStreetMap ways
 node tools/build-route.mjs                                        # writes route-data.js; fetches any elevations not yet in data/elevation.json
 node tools/check-links.mjs                                        # verifies the reference links
+node tools/social.mjs                                             # redraws social.png from the page at its defaults
 ```
 
 `data/ne_10m_land.geojson` (Natural Earth, 10 MB) is not tracked; download it from
