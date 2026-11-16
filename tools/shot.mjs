@@ -19,7 +19,7 @@ const out = await page.evaluate(() => ({
   verdicts: [...document.querySelectorAll(".vcard")].map(v => v.innerText.replace(/\n+/g, " | ")),
   tiles: [...document.querySelectorAll(".tile")].map(v => v.innerText.replace(/\n+/g, " | ")),
   cards: [...document.querySelectorAll("#cards .card")].map(c => c.innerText),
-  url: location.search, leaflet: !!window.L,
+  url: location.search,
 }));
 console.log(JSON.stringify(out, null, 1).replace(/\\n/g, "\n   ").replace(/\\t/g, "  →  "));
 console.log("ERRORS:", errs.length ? errs.join("\n") : "none");

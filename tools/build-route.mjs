@@ -103,7 +103,8 @@ const withKm = (line, k, s0) => { let s = 0; return line.map((p, i) => { if (i) 
 const simp = (line3, tol) => { const keep = new Set(simplify(line3.map(p => [p[0], p[1]]), tol).map(p => p[0] + "," + p[1])); return line3.filter(p => keep.has(p[0] + "," + p[1])); };
 const fmtLine = l => l.map(p => [r4(p[0]), r4(p[1]), +p[2].toFixed(2)]);
 const fullLine = (from, extLine, kExt, tol) => fmtLine([...simp(withKm(from.line, kBuilt, 0), 0.04), ...simp(withKm(extLine, kExt, from.km), tol).slice(1)]);
-const outStations = st => st.map(s => ({ id: s.id, name: s.name, short: s.short, must: s.must, built: s.built, km: r1(s.km), lon: r4(s.pos[0]), lat: r4(s.pos[1]), ...(s.off !== undefined ? { off: r1(s.off) } : {}), ...(s.reserve ? { reserve: true } : {}), ...(s.inferred ? { inferred: true } : {}) }));
+// Station chainage is rounded as the line's is, to 0.01 km: the terminus must sit exactly on the end of the line, and Karawang on the branch point.
+const outStations = st => st.map(s => ({ id: s.id, name: s.name, short: s.short, must: s.must, built: s.built, km: r2(s.km), lon: r4(s.pos[0]), lat: r4(s.pos[1]), ...(s.off !== undefined ? { off: r1(s.off) } : {}), ...(s.reserve ? { reserve: true } : {}), ...(s.inferred ? { inferred: true } : {}) }));
 const newStations = st => st.filter(s => !s.built && !s.reserve).length;
 
 const WARU = { id: "waru", name: "Surabaya (Waru)", pos: [112.726039, -7.346778] };           // the Waru interchange, on the southern edge of the city
@@ -161,8 +162,10 @@ for (const a of ALTS) {
   report(a.id, st);
   const line = fullLine(a.fromPt, a.extLine, extKm / a.drawn, 0.15);
   console.log("  drawn", a.drawn.toFixed(1), "km,", a.pub ? "published " + a.pub.km : "estimated " + extKm, "→ chainage ×" + kExt.toFixed(3), "; vertices", line.length);
+  const outSt = outStations(st), endKm = r2(r2(a.fromPt.km) + extKm);
+  if (outSt[outSt.length - 1].km !== endKm || line[line.length - 1][2] !== endKm) throw new Error(a.id + ": terminus at km " + outSt[outSt.length - 1].km + ", line ends at " + line[line.length - 1][2] + ", expected " + endKm);
   routes.push({ id: a.id, kind: a.kind, ...(a.alt ? { alt: a.alt } : {}), name: a.name, via: a.via, ...(a.from === "karawang" ? { skipsBandung: true } : {}), builtKm: r2(a.fromPt.km), extKm, drawnKm: r1(a.drawn),
-    ...(a.pub ? { pub: a.pub } : { stretch: r2(kMean) }), ...(a.jica ? { jica: a.jica } : {}), nStations: newStations(st), nReserve: st.filter(s => s.reserve).length, terminus: a.end.id, line, stations: outStations(st), def: a.def, key: a.key });
+    ...(a.pub ? { pub: a.pub } : { stretch: r2(kMean) }), ...(a.jica ? { jica: a.jica } : {}), nStations: newStations(st), nReserve: st.filter(s => s.reserve).length, terminus: a.end.id, line, stations: outSt, def: a.def, key: a.key });
 }
 
 // ---- elevation profiles: the ground under each line, and a rail level derived from it.
@@ -192,6 +195,8 @@ ALTS.forEach((a, n) => {
   // rail level over the part of the built line that is used and the new line together, then tied to the built line's own level at the junction
   const lead = whooshZ.slice(0, Math.floor(a.fromPt.km / PROF_STEP) + 1), all = railLevel([...lead, ...z], PROF_STEP), r = all.slice(lead.length), gap = at(whooshR, a.fromPt.km) - r[0];
   for (let i = 0; i < r.length && i * PROF_STEP < 5; i++) r[i] += gap * (1 - i * PROF_STEP / 5);
+  // the tie-in ramp adds its own slope: hold every step from the junction onward to the ruling gradient
+  for (let i = 1, d = MAX_GRADE * PROF_STEP * 1000; i < r.length; i++) r[i] = Math.max(r[i - 1] - d, Math.min(r[i - 1] + d, r[i]));
   const q = profStats(z, r), route = routes.find(x => x.id === a.id);
   route.prof = { z: z.map(Math.round), r: r.map(r1) };
   console.log("  " + a.id.padEnd(9), z.length, "samples, highest ground", Math.max(...z).toFixed(0), "m, rail climbs", q.up.toFixed(0), "m and falls", q.down.toFixed(0), "m, steepest", (q.steep * 1000).toFixed(1), "‰; ground >" + TUNNEL_COVER + " m above rail on", q.tunnel, "km", a.pub ? "(published tunnels " + a.pub.tunnelKm + " km)" : "", "; >" + VIADUCT_DROP + " m below on", q.viaduct, "km");
@@ -229,7 +234,7 @@ console.log("land rings", land.length, "vertices", land.reduce((a, r) => a + r.l
 const ROUTE = {
   builtKm: OFFICIAL_KM,
   whoosh: fmtLine(simp(withKm(built, kBuilt, 0), 0.04)),          // the whole built line, for the map
-  refKm: builtStations.map(s => r1(s.km)),
+  refKm: builtStations.map(s => r2(s.km)),
   profStepKm: PROF_STEP, profMaxGrade: MAX_GRADE,                 // elevation profiles: sample spacing along the chainage, and the ruling gradient of the rail level
   whooshProf: { z: whooshZ.map(Math.round), r: whooshR.map(r1) }, // ground and rail level along the built line, from km 0                        // today's service, Halim – Karawang – Padalarang – Tegalluar: the fare is calibrated on it
   routes,
