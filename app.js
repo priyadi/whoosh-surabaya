@@ -135,6 +135,8 @@ const REFS={
  r_verdictT:{t:"Traveller's verdict",d:"Compares generalised cost: fare, offset surcharge and the value of door-to-door time. The flight side is the average of the Halim and Soekarno–Hatta flights, weighted by each airport's share of flights; the comparison table shows each airport on its own. Train wins below 90 % of the flight's cost, flight wins above 110 %, anything between is a toss-up.",l:[LK("Wikipedia — Generalised cost",W_+"Generalised_cost"),LK("Wikipedia — Value of time",W_+"Value_of_time"),HSR]},
  r_verdictI:{t:"Investor's verdict",d:"Does the extension's fare revenue cover its operating cost and the annual payment on its construction cost? Coverage of 100 % or more pays for itself; an operating surplus that covers only part of the capital needs public money; revenue below operating cost loses money on every train.",l:[LK("Wikipedia — Farebox recovery ratio",W_+"Farebox_recovery_ratio"),LK("Wikipedia — Capital recovery factor",W_+"Capital_recovery_factor"),N_SCMP]},
  r_verdictP:{t:"Planet's verdict",d:"Compares CO₂e per passenger after offsets, including a share of construction carbon for the train. Within ±15 % is no clear winner.",l:[LK("Wikipedia — Environmental impact of aviation",W_+"Environmental_impact_of_aviation"),LK("Wikipedia — Life-cycle assessment",W_+"Life-cycle_assessment"),N_JCM]},
+ scc:{t:"Value of a tonne of CO₂",d:"The price put on a tonne of CO₂e when emissions are counted as a cost to society. It is used only in the cost–benefit card. The offset credit price is a separate input: that one is what a ticket buyer would pay for a credit, this one is what the emission is taken to cost everyone. Indonesia's 2021 tax law sets a carbon tax of at least Rp 30 per kg, under US$2 per tonne. The World Bank's guidance for project appraisal gives US$40–80 for 2020, rising to US$50–100 by 2030. The US Environmental Protection Agency's 2023 estimate of the social cost of carbon is about US$190.",l:[LK("Wikipedia — Social cost of carbon",W_+"Social_cost_of_carbon"),LK("Wikipedia — Carbon price",W_+"Carbon_price"),LK("Wikipedia — Carbon tax",W_+"Carbon_tax")]},
+ sec_cba:{t:"Cost and benefit to society",d:"The investor's verdict asks whether fares repay the line. This card asks whether the country as a whole comes out ahead, which is a different sum. Fares and the flight surcharge only move money between travellers, the operator and the state, so they are left out, and what counts is the resources used and saved. Benefits: the flying that riders taken from aircraft no longer need, valued at the airline's fare as a stand-in for what the flight costs to provide; the door-to-door time those riders gain, or lose when the train is slower, at the value of time; the trips of all other riders at the fare they pay, which is the least those trips can be worth to them; and the CO₂ avoided, at the value of a tonne. Costs: the operating cost, the yearly payment on construction, and the carbon of construction paid off the same way. Benefits are credited to the extension by its share of the route length, like the revenue. The return to society is the cost of capital at which benefits and costs are equal; economic appraisals usually ask for more than a lender does, and the Asian Development Bank's usual test is 9 %. This is a first-order appraisal, not a study. Ridership and the share of riders from flights are inputs, every traveller is the average one, the tax inside the flight fare is counted as if it were a cost, and what the other riders save by leaving the car, the bus or the older train is unknown. Safety, road congestion and reliability are left out. So are the wider effects usually claimed for such a line: construction jobs, an economic multiplier, growth of the cities along it and rising land values. Those need an input–output table or a spatial model of the regional economy, which this calculator does not have, and part of that activity moves from elsewhere and is not new.",l:[LK("Wikipedia — Cost–benefit analysis",W_+"Cost–benefit_analysis"),LK("Wikipedia — Benefit–cost ratio",W_+"Benefit–cost_ratio"),LK("Wikipedia — Economic surplus",W_+"Economic_surplus"),LK("Wikipedia — Transfer payment",W_+"Transfer_payment"),LK("Wikipedia — Social discount rate",W_+"Social_discount_rate"),LK("Wikipedia — Fiscal multiplier",W_+"Fiscal_multiplier"),LK("Wikipedia — Input–output model",W_+"Input–output_model"),LK("Wikipedia — Economies of agglomeration",W_+"Economies_of_agglomeration")]},
  r_verdictC:{t:"Capacity verdict",d:"Compares the seats the line could offer in a day, each direction, at the shortest headway and with the chosen stops, with the seats on today's Jakarta–Surabaya flights from both airports. Within ±15 % is no clear winner. It sets a ceiling against a schedule: the line's figure is what the signalling allows, not what would be run or filled, and the flights' figure is what the airlines fly today, not what the runways could take. The second sentence gives the same comparison for the trains of the trains slider.",l:[LK("Wikipedia — Route capacity",W_+"Route_capacity"),LK("Wikipedia — Headway",W_+"Headway"),LK("Wikipedia — List of busiest passenger flight routes",W_+"List_of_busiest_passenger_flight_routes")]},
 };
 // Inputs that share an explanation with their counterpart at the other end of the trip, or with their switch.
@@ -208,7 +210,7 @@ const CTLS=[
  {g:"Door to door",id:"tpre",label:"At the station before departure",min:5,max:60,step:5,def:20,fmt:MIN},
  {g:"Door to door",id:"tegr",label:"Surabaya station → destination",min:10,max:120,step:5,def:35,fmt:MIN,
   get note(){return RT.terminus==="pasarturi"?"This route ends at Pasar Turi, in the city centre. The default suits a terminus at Waru, about 18 km out by road.":"The modeled terminus at Waru is about 18 km by road from the city centre.";}},
- {g:"Door to door",id:"vot",label:"Value of the traveller's time",min:0,max:500000,step:10000,def:100000,fmt:v=>fmtRp(v)+" / h",note:"Turns minutes into rupiah for the verdict. 0 = only the price matters."},
+ {g:"Door to door",id:"vot",label:"Value of the traveller's time",min:0,max:500000,step:10000,def:100000,fmt:v=>fmtRp(v)+" / h",note:"Turns minutes into rupiah for the verdict and the cost–benefit card. 0 = only the price matters."},
 
  {g:"Economics",id:"capex",label:"Construction cost of the extension",min:10,max:70,step:1,def:30,fmt:v=>"US$"+v+" M / km",note:"The first Whoosh line: about US$51 M/km. Chinese domestic lines: US$17–21 M/km."},
  {g:"Economics",id:"trains",label:"Trains per day, each direction",min:6,max:SERVICE_HOURS*60/HEADWAY_MIN,step:1,def:24,dynMax:true,fmt:v=>v+" trains",note:"Whoosh runs 20–31 each way per day."}, // max: one train per shortest headway all day; update() lowers it to the line's ceiling
@@ -219,6 +221,7 @@ const CTLS=[
  {g:"Economics",id:"elec",label:"Electricity price",min:700,max:2000,step:25,def:1100,fmt:v=>"Rp "+fmtNum(v,0)+" / kWh",note:"PLN industrial tariffs: Rp 997 per kWh at high voltage (I-4), Rp 1,115 at medium voltage (I-3)."},
  {g:"Economics",id:"wacc",label:"Cost of capital",min:0,max:0.12,step:0.0025,def:0.05,fmt:v=>pct(v,2),note:"China Development Bank lent for the first line at 2 % and 3.4 %. Government bonds yield 6–7.7 % (7.5 % in Nov 2026)."},
  {g:"Economics",id:"life",label:"Asset life",min:20,max:80,step:5,def:40,fmt:v=>v+" yr",note:"Years over which the construction cost is repaid."},
+ {g:"Economics",id:"scc",label:"Value of a tonne of CO₂",min:0,max:300,step:5,def:50,fmt:v=>"US$"+v+" / tCO₂",note:"Prices emissions in the cost–benefit card. Indonesia's carbon tax law: under US$2. World Bank appraisal range for 2030: US$50–100. US EPA estimate of 2023: about US$190."},
 
  {g:"Energy & environment",id:"grid",label:"Grid carbon intensity",min:0,max:1000,step:10,def:800,fmt:v=>v+" gCO₂/kWh",note:"Java–Madura–Bali: about 800, with published factors from 530 to 870. Indonesia as a whole ≈ 680. World average ≈ 465."},
  {g:"Energy & environment",id:"eta",label:"Drivetrain efficiency, wire to wheel",min:0.75,max:0.95,step:0.01,def:0.85,fmt:P0},
@@ -229,7 +232,7 @@ const CTLS=[
  {g:"Energy & environment",id:"trainco2",label:"Carbon to build one trainset",min:0,max:8000,step:250,def:3500,fmt:v=>fmtNum(v,0)+" tCO₂",note:"About 450 t of train at roughly 8 kg CO₂ per kg. Spread over "+TRAIN_LIFE_YR+" years and the fleet the timetable needs."},
  {g:"Energy & environment",id:"planeco2",label:"Carbon to build one aircraft",min:0,max:5000,step:100,def:1500,fmt:v=>fmtNum(v,0)+" tCO₂",note:"About 43 t of A320 at roughly 35 kg CO₂ per kg of aerospace metal and composite. Spread over "+fmtNum(AIRCRAFT_CYCLES,0)+" flights."},
  {g:"Energy & environment",id:"apco2",label:"Airport construction carbon per passenger, both ends",min:0,max:5,step:0.1,def:1,fmt:v=>v.toFixed(1)+" kg",note:"Runways and terminals spread over 60 years of passengers. Set to 0 to treat the existing airports as already paid for."},
- {g:"Energy & environment",id:"divert",label:"Share of riders who would otherwise fly",min:0.05,max:1,step:0.05,def:0.4,fmt:P0,note:"Used only for the carbon payback of construction."},
+ {g:"Energy & environment",id:"divert",label:"Share of riders who would otherwise fly",min:0.05,max:1,step:0.05,def:0.4,fmt:P0,note:"Used for the carbon payback of construction and the cost–benefit card."},
  {g:"Energy & environment",id:"seatsair",label:"Aircraft seats",min:120,max:220,step:2,def:180,fmt:v=>v+" seats",note:"Airbus A320 in all-economy layout: 180."},
  {g:"Energy & environment",id:"lfair",label:"Flight load factor",min:0.5,max:1,step:0.01,def:0.8,fmt:P0},
  {g:"Energy & environment",id:"burn",label:"Cruise fuel burn",min:2,max:4,step:0.05,def:2.7,fmt:v=>v.toFixed(2)+" kg / km",note:"A320-class at cruise."},
@@ -450,7 +453,21 @@ function model(s,stopSet){
   m.beFare=m.fare.total*m.cost/m.rev; m.beLF=s.lf*m.cost/m.rev; // approximate: ignores that energy and train cost do not change with load
   // carbon payback of building the extension
   m.embExt=s.infraco2*m.ext; const save=(m.air.gross-m.air.apt-m.rail.op-m.rail.veh)*f*m.ridersYr*s.divert/1000; // airports already exist, so their share is not saved
-  m.payback=save>0?m.embExt/save:Infinity;
+  m.payback=save>0?m.embExt/save:Infinity; m.co2Save=save;              // tonnes a year, negative when the train emits more
+  // cost and benefit to society, the extension only. Fares and the flight surcharge move money between people and drop out; resources used and saved are what count.
+  { const air=m.ridersYr*s.divert, cp=s.scc*fx, dT=m.d2dAir.total-m.d2dRail.total, c=m.cba={air,dT};
+    c.fly=air*f*m.fareAir;                                 // flying no longer needed, at the airline's fare as a stand-in for what the flight costs to provide
+    c.time=air*f*s.vot*dT/60;                              // door-to-door time those riders gain, or lose when the train is slower
+    c.other=m.rev*(1-s.divert);                            // everyone else at the fare they pay, the least their trips are worth to them
+    c.co2=save*cp;                                         // CO₂ avoided in operation, as in the carbon payback
+    c.ben=c.fly+c.time+c.other+c.co2;
+    c.emb=m.embExt*cp; c.annEmb=c.emb*crf(s.wacc,s.life);  // carbon of construction is emitted up front, so it is paid off like the construction cost
+    c.cost=m.opex+m.annCap+c.annEmb; c.net=c.ben-c.cost; c.bcr=c.ben/c.cost;
+    // return to society: the rate at which the yearly benefits, net of operating cost, just repay construction and its carbon over the asset life
+    const y=(c.ben-m.opex)/(m.capex+c.emb);
+    if(y<=1/s.life)c.irr=-Infinity; else if(y>=crf(1,s.life))c.irr=Infinity;
+    else{let lo=0,hi=1;for(let i=0;i<50;i++){const r=(lo+hi)/2;if(crf(r,s.life)<y)lo=r;else hi=r;}c.irr=(lo+hi)/2;}
+  }
   // every stopping pattern: there are thousands, so only the fastest and slowest for each number of stops
   const patFare=(T,n)=>fare(m.L,T,n).total, names=idx=>idx.slice(1,-1).filter(i=>!ST[i].must).map(i=>SHORT[ST[i].id]);
   m.patCur={n:m.idx.length,T:J.T/60,fare:patFare(J.T,m.idx.length),names:names(m.idx)};
@@ -665,9 +682,40 @@ function update(){
         ["Yearly shortfall",m.cover>=1?"none":fmtRp(m.cost-m.rev),m.cover>=1?"":usd(m.cost-m.rev)+" per year to be found elsewhere"],
         ["Break-even fare, Jakarta–Surabaya",fmtRp(m.beFare),"fare × full cost ÷ revenue, at the same ridership"+(m.beFare>m.fareAir?" · above the average flight fare":"")],
         ["Break-even load factor",m.beLF<=1?pct(m.beLF):"> 100 %"+flag("not reachable","bad"),"at the current fare and train count"],
-      ])}</div></div></div>`+capCard(m,s);
+      ])}</div></div></div>`+cbaCard(m,s)+capCard(m,s);
 
   drawSpeed(m,s);drawD2D(m,s);drawGC(m,s);drawCO2(m,s);drawPatterns(m,s);drawSens(m,s);drawEcon(m,s);drawPeers(m,s);drawMap(m,s);drawRoutes(m,s);
+}
+
+// ---------- cost–benefit card ----------
+// The extension as the country sees it: resources used and saved per year. Fares and the surcharge are transfers and do not appear.
+function cbaCard(m,s){
+  const c=m.cba,k=crf(s.wacc,s.life),sRp=v=>(v<0?"− ":"")+fmtRp(Math.abs(v)),
+    head=t=>`<div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2);margin-bottom:4px;font-weight:600">${t}</div>`,
+    tWord=Math.abs(c.dT)<0.5?"no time difference door to door":fmtDur(Math.abs(c.dT))+(c.dT>0?" faster":" slower")+" door to door";
+  return `<div class="card" style="grid-column:1/-1"><h2>${ico("economics")}Cost and benefit to society${refBtn("sec_cba")}<span>the extension only · per year · resources used and saved; fares${m.levy>0?" and the flight surcharge":""} only move money and are left out</span></h2>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px">
+      <div>${head("Benefits")}${kv([
+        ["Riders who would otherwise fly"+refBtn("divert"),fmtNum(c.air/1e6,1)+" M",`${fmtNum(m.ridersYr/1e6,1)} M riders × ${pct(s.divert)}`],
+        ["Flying they no longer need",fmtRp(c.fly),`those riders × ${fmtRp(m.fareAir)} average flight fare × L_ext ÷ L`],
+        ["Their time, train against flight"+refBtn("vot"),sRp(c.time),`those riders × ${tWord} × ${fmtRp(s.vot)}/h × L_ext ÷ L`],
+        ["Trips of the other riders",fmtRp(c.other),`fare revenue × ${pct(1-s.divert)} · the fare they pay is the least these trips are worth to them`],
+        [(m.co2Save<0?"CO₂ added by the riders who would otherwise fly":"CO₂ avoided by the riders who would otherwise fly")+refBtn("scc"),sRp(c.co2),`${fmtT(Math.abs(m.co2Save))} a year × US$${s.scc}`],
+        ["Benefits",sRp(c.ben),"",true],
+      ])}</div>
+      <div>${head("Costs")}${kv([
+        ["Operating cost",fmtRp(m.opex),"electricity, train operations and maintenance, as above"],
+        ["Yearly payment on construction"+refBtn("wacc"),fmtRp(m.annCap),"as above"],
+        ["Carbon of construction, as a yearly payment"+refBtn("infraco2"),fmtRp(c.annEmb),`${fmtT(m.embExt)} × US$${s.scc} × CRF of ${pct(k,2)}`],
+        ["Costs",fmtRp(c.cost),"",true],
+      ])}</div>
+      <div>${head("Result")}${kv([
+        ["Net benefit per year",sRp(c.net),"benefits − costs"],
+        ["Benefit–cost ratio",fmtNum(Math.max(0,c.bcr),2)+(c.net>=0?flag("benefits exceed costs","ok"):flag("costs exceed benefits","bad")),"benefits ÷ costs",true],
+        ["Return to society",c.irr===-Infinity?"below 0 %":c.irr===Infinity?"> 100 %":pct(c.irr,1),`the cost of capital at which benefits equal costs · the slider is at ${pct(s.wacc,2)}`],
+        ["Full cost covered by fares, for comparison",pct(m.cover),"the investor's view of the same line"],
+        ["Wider effects on the economy","not counted","construction jobs, an economic multiplier, growth of the cities along the line, land values"],
+      ])}</div></div></div>`;
 }
 
 // ---------- capacity card ----------
@@ -972,6 +1020,7 @@ const NOTES=()=>[
  `<b>Flights.</b> Two legs into Juanda: from Halim Perdanakusuma (${fmtNum(GC_KM,0)} km great circle) and from Soekarno–Hatta (${fmtNum(GC_CGK,0)} km). Each has its own fare, block time and city-to-airport time; check-in, baggage and the Surabaya end are shared. Verdicts, the carbon payback and the charts' reference lines use the average weighted by the share of flights from each airport. The fare is an input because it varies several-fold by airline, season and booking time within the regulated band. Fuel = fixed take-off and landing fuel + cruise burn × distance flown. CO₂ = fuel × 3.16 kg/kg, times a life-cycle multiplier for fuel production, with an optional multiplier for non-CO₂ warming applied to combustion only.`,
  `<b>Traveller's verdict.</b> Generalised cost = ticket + flight surcharge, if one is set + offset surcharge + value of time × door-to-door hours. The train wins below 90 % of the flight's generalised cost and loses above 110 %. Comfort, reliability, luggage, frequency and the chance of working on board are not priced. The market-share figure is a separate rule of thumb based only on the length of the train ride.`,
  `<b>Investor's verdict.</b> Only the new line is costed. Revenue is riders × fare × the extension's share of the route length, with riders = trains × seats × load factor, counted as end-to-end equivalents. Costs are traction electricity, a per-train-km operating cost, a per-km maintenance cost, and the construction cost turned into a level yearly payment with a capital recovery factor. Land acquisition risk, construction delay, ramp-up years, non-fare income, tax and the debt of the first line are not modeled. Ridership is an input; it is not derived from the fare or the travel time.`,
+ `<b>Cost and benefit to society.</b> The same extension as the country sees it, not the operator. Fares and the flight surcharge move money between travellers, the operator and the state, so they are left out; resources are counted. Benefits: riders who would otherwise fly × the average flight fare, standing in for what the flight costs to provide; the same riders × the door-to-door time difference × the value of time, which is a loss when the train is slower; the other riders at the fare they pay, a floor on what their trips are worth; and the CO₂ avoided × the value of a tonne. Costs: operating cost, the yearly payment on construction, and the carbon of construction paid off the same way. Benefits are credited to the extension by its share of the route length. Every traveller is the average one, ridership and the share of riders from flights are inputs, and offsets are ignored. Safety, road congestion, reliability, construction jobs, any economic multiplier, growth of the cities along the line and land values are not counted.`,
  `<b>Capacity.</b> The ceiling is one train per headway, for as long as a train can still finish its run inside the ${SERVICE_HOURS}-hour service day: departures = (${SERVICE_HOURS} h − ride) ÷ headway + 1, each with ${SEATS} seats. A trainset makes ${SERVICE_HOURS} h ÷ (ride + ${TURNAROUND_MIN} min turnaround) one-way trips a day, less 10 % spare, which is what a fixed fleet can offer. For a mixed timetable the chosen pattern alternates with expresses and is overtaken at every optional stop: each stop then costs the stopping train the time lost braking and accelerating plus two headways standing, or its dwell if that is longer, and two trains run per such cycle. This is a first-order estimate, not a constructed timetable; station tracks, the terminals and short workings are ignored. The flights are the seats on today's schedule from both Jakarta airports, not what the runways could handle. The capacity verdict sets the ceiling against those seats, with ±15 % counted as no clear winner. Who would fill the seats is not modeled.`,
  `<b>Planet's verdict.</b> CO₂e per passenger after offsets, train against flight, with ±15 % counted as no clear winner. The train carries the electricity it uses at the grid's intensity plus a share of the carbon emitted to build the whole line, spread over the carbon accounting period and all riders, plus the trainsets over 30 years. The flight carries a share of building the aircraft (over 40,000 flights) and the two airports. Carbon payback counts only riders who would otherwise have flown, credits the avoided fuel and aircraft but not the airports, which already exist, and charges the train its electricity and trainsets.`,
  `<b>Offsets.</b> When switched on, both modes buy credits for the chosen share of their gross emissions at one price, and the cost is added to each ticket. Only share × integrity is taken off the emissions shown, so cheap low-integrity credits change the price a little and the verdict less. Because both modes offset the same share, their ratio does not change; offsets matter here through the surcharge, which is larger for whichever mode emits more.`,
