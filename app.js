@@ -2,14 +2,27 @@
 // Whoosh to Surabaya Calculator — model, charts and map. No build step; ROUTE comes from route-data.js.
 
 // ---------- constants ----------
-const G=9.80665, SEATS=601, B_KM=ROUTE.builtKm, ZONE_KM=8, ROT=1.04, CO2_PER_KG_FUEL=3.16, DS=0.2;
+const G=9.80665, SEATS=601, WHOOSH_KM=ROUTE.builtKm, ZONE_KM=8, ROT=1.04, CO2_PER_KG_FUEL=3.16, DS=0.2;
 const DAVIS=[0.79,0.0064,0.000076];        // N per kN of train weight: a + b·V + c·V², V in km/h
 const TRAIN_LIFE_YR=30, AIRCRAFT_CYCLES=40000; // service lives used to spread manufacturing carbon
 const TURNAROUND_MIN=30, SERVICE_HOURS=18, N_REF=4; // reference service: Halim – Karawang – Padalarang – Tegalluar
-const ST=ROUTE.stations, OPT=ST.filter(s=>!s.must).map(s=>s.id);
-const SHORT={jakarta:"Jakarta",karawang:"Karawang",padalarang:"Padalarang",bandung:"Bandung",cirebon:"Cirebon",tegal:"Tegal",pekalongan:"Pekalongan",semarang:"Semarang",surakarta:"Surakarta",madiun:"Madiun",mojokerto:"Mojokerto",surabaya:"Surabaya"};
-const I_BDG=ST.findIndex(s=>s.id==="bandung"), MUST_IDX=ST.map((s,i)=>s.must?i:-1).filter(i=>i>=0), N_MUST=MUST_IDX.length, REF_IDX=ST.map((s,i)=>s.built?i:-1).filter(i=>i>=0), N_PAT=1<<OPT.length;
-const DEFAULT_STOPS=["cirebon","semarang","surakarta"];
+// Routes: the three alternatives of KCIC's pre-feasibility study (the first is the default) and the other combinations of its corridors.
+// useRoute() points these at the chosen one; everything below reads them.
+const ROUTES=ROUTE.routes, ROUTE_DEF="south";
+const SHORT={};ROUTES.forEach(r=>r.stations.forEach(x=>{SHORT[x.id]=x.short;}));
+let RT,ST,OPT,ALL,B_KM,I_BDG,MUST_IDX,N_MUST,N_PAT,DEFAULT_STOPS; // B_KM: how much of the built line the route uses
+function useRoute(id){
+  RT=ROUTES.find(r=>r.id===id)||ROUTES.find(r=>r.id===ROUTE_DEF);
+  ST=RT.stations;OPT=ST.filter(s=>!s.must).map(s=>s.id);ALL=OPT.slice();DEFAULT_STOPS=RT.def;B_KM=RT.builtKm;
+  I_BDG=ST.findIndex(s=>s.id==="bandung");MUST_IDX=ST.map((s,i)=>s.must?i:-1).filter(i=>i>=0);N_MUST=MUST_IDX.length;
+  N_PAT=2**OPT.length;
+}
+useRoute(ROUTE_DEF);
+const routeTitle=r=>r.kind==="kcic"?"Alternative "+r.alt+" · "+r.name:r.name;
+const ROUTE_GROUP={kcic:"KCIC pre-feasibility study, 2024",combo:"Other ways to join the mapped corridors"};
+const extKmText=r=>r.kind==="kcic"?fmtNum(r.extKm,2)+" km":"about "+fmtNum(r.extKm,0)+" km";
+// city speed limit applies around the two ends, and around Tegalluar on the routes that pass it
+const zonesFor=(r,L)=>r.skipsBandung?[0,L]:[0,L,WHOOSH_KM];
 const hav=(a,b)=>{const R=6371.0088,r=Math.PI/180,dl=(b.lat-a.lat)*r,dn=(b.lon-a.lon)*r;const h=Math.sin(dl/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h));};
 const GC_KM=hav(ROUTE.airports.HLP,ROUTE.airports.SUB), GC_CGK=hav(ROUTE.airports.CGK,ROUTE.airports.SUB);
 
@@ -40,11 +53,12 @@ const N_JCM=LK("JCM / GEC — grid emission factors for Indonesia","https://gec.
 const WHOOSH=LK("Wikipedia — High-speed rail in Indonesia (Whoosh)",W_+"High-speed_rail_in_Indonesia");
 const HSR=LK("Wikipedia — High-speed rail",W_+"High-speed_rail");
 const REFS={
- premise:{t:"Extending Whoosh to Surabaya",d:"Whoosh is the 142.3 km, 350 km/h line between Jakarta (Halim) and Bandung (Tegalluar) that opened in October 2023. Extending it to Surabaya has been discussed by successive governments; as of 2026 it is still under study, and officials have tied it to resolving the debt of the first line. No route has been fixed. This page assumes the simplest possible one: the track follows the existing Trans-Java toll roads.",l:[WHOOSH,LK("Wikipedia — Rail transport in Indonesia",W_+"Rail_transport_in_Indonesia"),LK("Wikipedia — Kereta Cepat Indonesia China",W_+"Kereta_Cepat_Indonesia_China"),N_TEMPO,N_SCMP,LK("Tempo — national high-speed rail committee to address Whoosh issues","https://en.tempo.co/read/2081787/indonesia-to-form-high-speed-rail-committee-to-address-whoosh-issues"),LK("Seasia — Whoosh marks two years, prepares for next phase to Surabaya","https://seasia.co/2025/10/22/indonesias-whoosh-marks-two-years-prepares-for-next-phase-to-surabaya"),LK("Katadata — Jakarta–Surabaya high-speed train plan is on again (2023)","https://dinsights.katadata.co.id/read/2023/10/03/jakarta-surabaya-high-speed-train-plan-is-on-again"),LK("Wikipedia — Jakarta–Surabaya line (the conventional railway)",W_+"Jakarta%E2%80%93Surabaya_line")]},
- stops:{t:"Stops",d:"Jakarta, both Bandung stations (Padalarang and Tegalluar) and Surabaya are always served, as every Whoosh train does today. The eight optional stations sit where the line passes each city. Every stop costs braking, dwell and re-acceleration time, and adds a station to pay for; it also brings the city's passengers. Existing stations are at their real positions (Padalarang falls at km 110 of the traced line; the 55.6 km and 45.6 km spacings often quoted date from the 2021 plan with a station at Walini, and are shorter than the 61 km straight line from Karawang to Padalarang); new ones are placed at the point of the toll corridor nearest each city centre.",l:[LK("Wikipedia — Halim railway station",W_+"Halim_railway_station"),LK("Wikipedia — Karawang HSR station",W_+"Karawang_HSR_station"),LK("Wikipedia — Tegalluar railway station",W_+"Tegalluar_railway_station"),LK("Wikipedia — Cirebon",W_+"Cirebon"),LK("Wikipedia — Pekalongan",W_+"Pekalongan"),LK("Wikipedia — Semarang",W_+"Semarang"),LK("Wikipedia — Surakarta",W_+"Surakarta"),LK("Wikipedia — Madiun",W_+"Madiun"),LK("Wikipedia — Surabaya",W_+"Surabaya"),LK("Wikipedia — Dwell time (transportation)",W_+"Dwell_time_(transportation)")]},
- sec_map:{t:"Route map",d:"The built line is the real track geometry from OpenStreetMap. The extension is traced along the toll roads a driver would use from Bandung to Surabaya: Cileunyi–Sumedang–Dawuan, Cikopo–Palimanan, Palimanan–Kanci, Kanci–Pejagan, Pejagan–Pemalang, Pemalang–Batang, Batang–Semarang, the Semarang ring, Semarang–Solo, Solo–Ngawi, Ngawi–Kertosono, Kertosono–Mojokerto and Surabaya–Mojokerto, ending at the Waru interchange. A real high-speed alignment would be straighter than a motorway; the alignment slider scales the length.",l:[LK("Wikipedia — Trans-Java Toll Road",W_+"Trans-Java_Toll_Road"),LK("Wikipedia — Cileunyi–Sumedang–Dawuan Toll Road",W_+"Cileunyi%E2%80%93Sumedang%E2%80%93Dawuan_Toll_Road"),LK("Wikipedia — Cikopo–Palimanan Toll Road",W_+"Cikopo%E2%80%93Palimanan_Toll_Road"),LK("Wikipedia — Palimanan–Kanci Toll Road",W_+"Palimanan%E2%80%93Kanci_Toll_Road"),LK("Wikipedia — Kanci–Pejagan Toll Road",W_+"Kanci%E2%80%93Pejagan_Toll_Road"),LK("Wikipedia — Pejagan–Pemalang Toll Road",W_+"Pejagan%E2%80%93Pemalang_toll_road"),LK("Wikipedia — Pemalang–Batang Toll Road",W_+"Pemalang%E2%80%93Batang_Toll_Road"),LK("Wikipedia — Batang–Semarang Toll Road",W_+"Batang%E2%80%93Semarang_Toll_Road"),LK("Wikipedia — Semarang–Solo Toll Road",W_+"Semarang%E2%80%93Solo_Toll_Road"),LK("Wikipedia — Solo–Kertosono Toll Road",W_+"Solo%E2%80%93Kertosono_Toll_Road"),LK("Wikipedia — Kertosono–Mojokerto Toll Road",W_+"Kertosono%E2%80%93Mojokerto_Toll_Road"),LK("Wikipedia — Surabaya–Mojokerto Toll Road",W_+"Surabaya%E2%80%93Mojokerto_Toll_Road"),LK("Wikipedia — OpenStreetMap",W_+"OpenStreetMap"),LK("Wikipedia — Open Source Routing Machine",W_+"Open_Source_Routing_Machine")]},
+ premise:{t:"Extending Whoosh to Surabaya",d:"Whoosh is the 142.3 km, 350 km/h line between Jakarta (Halim) and Bandung (Tegalluar) that opened in October 2023. Extending it to Surabaya has been discussed by successive governments; as of 2026 it is still under study, and officials have tied it to resolving the debt of the first line. No route has been fixed. This page models the three alternatives of KCIC's pre-feasibility study and the other combinations of the corridors on its map.",l:[WHOOSH,LK("Wikipedia — Rail transport in Indonesia",W_+"Rail_transport_in_Indonesia"),LK("Wikipedia — Kereta Cepat Indonesia China",W_+"Kereta_Cepat_Indonesia_China"),N_TEMPO,N_SCMP,LK("Tempo — national high-speed rail committee to address Whoosh issues","https://en.tempo.co/read/2081787/indonesia-to-form-high-speed-rail-committee-to-address-whoosh-issues"),LK("Seasia — Whoosh marks two years, prepares for next phase to Surabaya","https://seasia.co/2025/10/22/indonesias-whoosh-marks-two-years-prepares-for-next-phase-to-surabaya"),LK("Katadata — Jakarta–Surabaya high-speed train plan is on again (2023)","https://dinsights.katadata.co.id/read/2023/10/03/jakarta-surabaya-high-speed-train-plan-is-on-again"),LK("Wikipedia — Jakarta–Surabaya line (the conventional railway)",W_+"Jakarta%E2%80%93Surabaya_line")]},
+ routes:{t:"Route alternatives",d:"Seven ways to draw the line to Surabaya. Three are the alternatives of KCIC's pre-feasibility study of 2024, still under review, taken from the comparison map that Kompas.id published in December 2024. Each is measured from Tegalluar: Lintas Selatan via Kroya and Yogyakarta (629.45 km, 21.25 km of it in tunnel, 13 stations and 1 in reserve, 180 minutes), Lintas Tengah via Cirebon and Purwokerto (679.19 km, 44.61 km in tunnel, 15 stations and 1 in reserve, 193 minutes) and Lintas Utara via Cirebon and Semarang (641.96 km, 51.95 km in tunnel, 14 stations and 1 in reserve, 184 minutes). KCIC's consultant recommended the southern one. All three share the line from Solo to Surabaya, and the southern and central ones share Kroya to Solo. The map names the stations. Names in red add up to the published counts; Sumedang, Garut and Cilacap, in green, are taken to be the reserve stations, which gives the southern line two where its legend says one. The map is a sketch on a base map, so each line is redrawn here as a smooth curve through its stations, and distances are stretched by 4–5 % to the published length. The same map shows the north-coast corridor of JICA's semi-high-speed study: 713 km from Jakarta, 5 passenger stations, 5.5 hours. The last four options are the other ways of joining these corridors end to end: Lintas Utara as far as Semarang and then the coast, and three that leave the built line at Karawang, skip Bandung and follow the coast to Cirebon, continuing along Lintas Tengah, along Lintas Utara through Solo, or along the coast throughout. None of the four is an alternative of either study, and that the coastal line would branch off at Karawang is this page's assumption. Their lengths are estimates and their stations on JICA's corridor are inferred. Routes that reach Surabaya along the coast end at Pasar Turi, the others at Waru.",l:[LK("Kontan — three alternative alignments for the Whoosh extension (2025)","https://industri.kontan.co.id/news/bandung-surabaya-cuma-3-jam-ini-tiga-alternatif-jalur-perpanjangan-whoosh"),LK("Kompas — KCIC on the Surabaya extension (February 2025)","https://money.kompas.com/read/2025/02/14/142626826/apa-kabar-proyek-perpanjangan-whoosh-ke-surabaya-ini-kata-kcic?page=all"),LK("CNBC Indonesia — planned Jakarta–Surabaya route, phasing and KCIC's recommendation (July 2025)","https://www.cnbcindonesia.com/news/20250729162059-4-653281/rencana-rute-kereta-cepat-jakarta-surabaya-era-jokowi-lewat-sini"),LK("Okezone — three route options named by the transport minister (October 2024)","https://economy.okezone.com/read/2024/10/06/320/3071420/3-opsi-jalur-kereta-cepat-jakarta-surabaya"),LK("Kompas.id — the strategic plan for the Jakarta–Surabaya high-speed railway, with the comparison map (subscription)","https://www.kompas.id/artikel/keberlanjutan-kereta-cepat-infrastruktur-untuk-siapa"),LK("Wikipedia — Kereta Cepat Indonesia China",W_+"Kereta_Cepat_Indonesia_China")]},
+ stops:{t:"Stops",d:"Jakarta, both Bandung stations (Padalarang and Tegalluar) and Surabaya are always served, as every Whoosh train does today; routes that leave the built line at Karawang always serve only Jakarta and Surabaya. The optional stations sit where the line passes each city. Every stop costs braking, dwell and re-acceleration time, and adds a station to pay for; it also brings the city's passengers. Existing stations are at their real positions (Padalarang falls at km 110 of the traced line; the 55.6 km and 45.6 km spacings often quoted date from the 2021 plan with a station at Walini, and are shorter than the 61 km straight line from Karawang to Padalarang); new ones are placed at the point of the route nearest each city centre. On the KCIC alternatives the stations are those named on the study's map, the reserve ones included. Stations marked inferred lie on corridors the study does not cover.",l:[LK("Wikipedia — Halim railway station",W_+"Halim_railway_station"),LK("Wikipedia — Karawang HSR station",W_+"Karawang_HSR_station"),LK("Wikipedia — Tegalluar railway station",W_+"Tegalluar_railway_station"),LK("Wikipedia — Cirebon",W_+"Cirebon"),LK("Wikipedia — Pekalongan",W_+"Pekalongan"),LK("Wikipedia — Semarang",W_+"Semarang"),LK("Wikipedia — Surakarta",W_+"Surakarta"),LK("Wikipedia — Madiun",W_+"Madiun"),LK("Wikipedia — Surabaya",W_+"Surabaya"),LK("Wikipedia — Dwell time (transportation)",W_+"Dwell_time_(transportation)")]},
+ sec_map:{t:"Route map",d:"The built line is the real track geometry from OpenStreetMap. The new line is drawn as a smooth curve through the stations on the map of KCIC's pre-feasibility study, which is a sketch and not a surveyed alignment, with distances scaled to the published or estimated length; the alignment slider scales it further. The routes not chosen appear as thin dashed lines.",l:[LK("Kompas.id — the strategic plan for the Jakarta–Surabaya high-speed railway, with the comparison map (subscription)","https://www.kompas.id/artikel/keberlanjutan-kereta-cepat-infrastruktur-untuk-siapa"),LK("Wikipedia — Kereta Cepat Indonesia China",W_+"Kereta_Cepat_Indonesia_China"),LK("Wikipedia — OpenStreetMap",W_+"OpenStreetMap"),LK("Wikipedia — Centripetal Catmull–Rom spline",W_+"Centripetal_Catmull%E2%80%93Rom_spline")]},
  sec_speed:{t:"Speed profile",d:"Between two stops the train accelerates at the starting acceleration until traction power becomes the limit, then at whatever the remaining power allows after rolling and air resistance; it cruises at the speed limit and brakes at the service rate so that it stops exactly at the platform. Lower limits apply within 8 km of the Jakarta, Bandung and Surabaya stations. Gradients and curves are ignored.",l:[LK("Wikipedia — Tractive effort",W_+"Tractive_effort"),LK("Wikipedia — Rolling resistance (railway)",W_+"Rolling_resistance"),LK("Wikipedia — Drag (physics)",W_+"Drag_(physics)"),LK("Wikipedia — Fuxing (train)",W_+"Fuxing_(train)"),LK("Wikipedia — China Railway CR400AF (parent of the KCIC400AF)",W_+"China_Railway_CR400AF"),LK("Wikipedia — Railway brake",W_+"Railway_brake")]},
- alignf:{t:"Alignment length",d:"Scales the length of the extension relative to the toll roads. Motorways bend around towns and hills with curve radii of a few hundred metres; a 350 km/h railway needs about 7 km under Chinese standards (5.5 km at the limit), so it cuts corners with viaducts and tunnels and ends up shorter. Below 1 means straighter than the toll roads.",l:[LK("Wikipedia — Minimum railway curve radius",W_+"Minimum_railway_curve_radius"),LK("Wikipedia — Trans-Java Toll Road",W_+"Trans-Java_Toll_Road"),HSR]},
+ alignf:{t:"Alignment length",d:"Scales the length of the new line. On a KCIC alternative 1 keeps the length published in the study; on the other combinations it keeps this page's estimate. The alignment itself has not been surveyed: a 350 km/h railway needs curves of about 7 km radius under Chinese standards (5.5 km at the limit), so the final line may run straighter or less straight than the study assumed, and the length would change with it.",l:[LK("Wikipedia — Minimum railway curve radius",W_+"Minimum_railway_curve_radius"),HSR]},
  vmax:{t:"Line speed",d:"Maximum speed in regular service. Whoosh runs at 350 km/h, the same as the fastest Chinese lines; most European and Japanese lines run at 300–320 km/h.",l:[WHOOSH,LK("Wikipedia — China Railway CR400AF (parent of the KCIC400AF)",W_+"China_Railway_CR400AF"),LK("Wikipedia — Fuxing (train)",W_+"Fuxing_(train)"),LK("Wikipedia — List of high-speed railway lines",W_+"List_of_high-speed_railway_lines")]},
  vurb:{t:"Speed limit near the main stations",d:"Lines enter big cities on tighter curves and shared corridors, so trains run slower there. Applied within 8 km of Halim, Tegalluar and the Surabaya terminus.",l:[LK("Wikipedia — Halim railway station",W_+"Halim_railway_station"),LK("Wikipedia — Rail speed limits in the United States (how limits are set)",W_+"Rail_speed_limits_in_the_United_States"),LK("Wikipedia — Minimum railway curve radius",W_+"Minimum_railway_curve_radius")]},
  pwr:{t:"Traction power",d:"Continuous power at the wheels of one 8-car set. It decides how quickly the train reaches top speed and whether it can hold it.",l:[LK("Wikipedia — Fuxing (train), CR400AF specifications",W_+"Fuxing_(train)"),LK("Wikipedia — China Railway CR400AF (parent of the KCIC400AF)",W_+"China_Railway_CR400AF"),LK("Wikipedia — Tractive effort",W_+"Tractive_effort"),LK("Wikipedia — Electric multiple unit",W_+"Electric_multiple_unit")]},
@@ -67,7 +81,7 @@ const REFS={
  fpre:{t:"Time at the airport before departure",l:[LK("Wikipedia — Airport check-in",W_+"Airport_check-in"),LK("Wikipedia — Airport security",W_+"Airport_security")]},
  fpost:{t:"Leaving the aircraft and the airport",l:[LK("Wikipedia — Baggage reclaim",W_+"Baggage_reclaim"),LK("Wikipedia — Juanda International Airport",W_+"Juanda_International_Airport")]},
  facc:{t:"Getting to and from the airports",d:"Halim airport is inside Jakarta; its terminal is about 2.5 km from the Whoosh station in a straight line and 7 km by road, so the Jakarta end is nearly the same for the train and the Halim flight. Soekarno–Hatta is farther out and has its own slider. Juanda is about 15 km south of central Surabaya in a straight line and 22 km by road.",l:[LK("Wikipedia — Halim Perdanakusuma International Airport",W_+"Halim_Perdanakusuma_International_Airport"),LK("Wikipedia — Juanda International Airport",W_+"Juanda_International_Airport"),LK("Wikipedia — Transport in Jakarta",W_+"Transport_in_Jakarta")]},
- tacc:{t:"Getting to and from the stations",d:"Halim station connects to the Jabodebek LRT. The modeled Surabaya terminus is at the Waru interchange, about 11 km from the city centre in a straight line and 18 km by road, because that is where the toll road ends.",l:[LK("Wikipedia — Halim railway station",W_+"Halim_railway_station"),LK("Wikipedia — Jabodebek LRT",W_+"Jabodebek_LRT"),LK("Wikipedia — Surabaya",W_+"Surabaya")]},
+ tacc:{t:"Getting to and from the stations",d:"Halim station connects to the Jabodebek LRT. The modeled Surabaya terminus is at the Waru interchange on the southern edge of the city, about 11 km from the centre in a straight line and 18 km by road. That is this page's assumption: the study's map places the terminus only roughly. Routes that follow the north coast into Surabaya end at Pasar Turi, in the centre.",l:[LK("Wikipedia — Halim railway station",W_+"Halim_railway_station"),LK("Wikipedia — Jabodebek LRT",W_+"Jabodebek_LRT"),LK("Wikipedia — Surabaya",W_+"Surabaya")]},
  tpre:{t:"Time at the station before departure",l:[WHOOSH,LK("Wikipedia — Train station",W_+"Train_station")]},
  vot:{t:"Value of travel time",d:"What an hour of the traveller's time is worth. It converts the time difference into money so that time and price can be compared in one number, the generalised cost.",l:[LK("Wikipedia — Value of time",W_+"Value_of_time"),LK("Wikipedia — Generalised cost",W_+"Generalised_cost"),LK("Wikipedia — Economy of Indonesia",W_+"Economy_of_Indonesia")]},
  capex:{t:"Construction cost per km",d:"All-in cost of the new line per route-km, including stations and systems. The first Whoosh line cost about US$7.3 billion for 142.3 km, or US$51 million per km, with long tunnels and viaducts. Chinese domestic lines have cost roughly US$17–21 million per km.",l:[WHOOSH,LK("Wikipedia — Kereta Cepat Indonesia China",W_+"Kereta_Cepat_Indonesia_China"),LK("Wikipedia — High-speed rail in China",W_+"High-speed_rail_in_China"),N_SCMP]},
@@ -101,7 +115,7 @@ const REFS={
  sec_d2d:{t:"Door-to-door time",d:"What the traveller experiences: getting to the terminal, waiting, the ride, and getting from the terminal to the destination. Flights are fast in the air but lose time at both ends.",l:[HSR,LK("Wikipedia — Airport check-in",W_+"Airport_check-in"),LK("Wikipedia — Value of time",W_+"Value_of_time")]},
  sec_gc:{t:"Generalised cost",d:"Fare plus offset surcharge plus the money value of door-to-door time. The traveller's verdict compares this number for the train and the flight; within ±10 % is called a toss-up.",l:[LK("Wikipedia — Generalised cost",W_+"Generalised_cost"),LK("Wikipedia — Value of time",W_+"Value_of_time"),LK("Wikipedia — Mode choice",W_+"Mode_choice")]},
  sec_co2:{t:"CO₂ per passenger",d:"Train: electricity for traction and on-board systems times the grid factor, plus a share of the carbon emitted to build the line and the trainsets. Flight: fuel burned times 3.16 kg CO₂ per kg, plus fuel production and, optionally, non-CO₂ effects, plus a share of building the aircraft and the two airports. The line dominates the train's built share because it is 816 km of new structure used by a few million passengers a year; an airport is a few square kilometres shared by tens of millions.",l:[LK("Wikipedia — Environmental impact of aviation",W_+"Environmental_impact_of_aviation"),LK("Wikipedia — Environmental design in rail transportation",W_+"Environmental_design_in_rail_transportation"),LK("Wikipedia — Energy efficiency in transport",W_+"Energy_efficiency_in_transport"),N_FUXING,N_JCM]},
- sec_patterns:{t:"Every stopping pattern",d:"Each dot is one of the 256 ways to choose among the eight optional stops, placed by its Jakarta–Surabaya time and fare. The highlighted dot is the current choice. Lines mark the flight fare and the train time at which both modes take equally long door to door.",l:[LK("Wikipedia — Skip-stop",W_+"Skip-stop"),LK("Wikipedia — Limited-stop",W_+"Limited-stop"),HSR]},
+ sec_patterns:{t:"Every stopping pattern",d:"The optional stops can be combined in thousands of ways, so each number of stops is drawn as one bar, from its fastest to its slowest pattern, placed by Jakarta–Surabaya time and fare. The highlighted dot is the current choice. Lines mark the flight fare and the train time at which both modes take equally long door to door.",l:[LK("Wikipedia — Skip-stop",W_+"Skip-stop"),LK("Wikipedia — Limited-stop",W_+"Limited-stop"),HSR]},
  sec_sens:{t:"Travel time against line speed",d:"The current stopping pattern re-run at line speeds from 200 to 400 km/h. The orange line is the in-train time at which rail and air tie door to door.",l:[HSR,LK("Wikipedia — List of high-speed railway lines",W_+"List_of_high-speed_railway_lines"),LK("Wikipedia — Fuxing (train)",W_+"Fuxing_(train)")]},
  sec_econ:{t:"Economics of the extension",d:"Only the new Bandung–Surabaya section is costed; the first line is treated as already built. Revenue is the extension's distance share of the fares collected. Construction cost is turned into a level annual payment over the asset life at the cost of capital.",l:[LK("Wikipedia — Capital recovery factor",W_+"Capital_recovery_factor"),LK("Wikipedia — Farebox recovery ratio",W_+"Farebox_recovery_ratio"),LK("Wikipedia — Kereta Cepat Indonesia China",W_+"Kereta_Cepat_Indonesia_China"),LK("Wikipedia — Danantara",W_+"Danantara"),N_SCMP,N_TEMPO]},
  sec_peers:{t:"Comparable high-speed lines",d:"City pairs of roughly the same length as Jakarta–Surabaya on which high-speed trains run today. Distances are route lengths of the high-speed line; for Japan the real length is used, not the longer fare distance. Times are the fastest scheduled train reported in the sources, which usually makes few stops; a typical train is 10 to 30 minutes slower. Rail share is rail ÷ (rail + air) passengers for the year shown; the figures come from operators, regulators and press reports and are not measured the same way, so read them to the nearest ten points. Berlin–Munich (46 % rail, 30 % air, 24 % road in 2018) and Rome–Milan (67 % rail, 21 % air in 2017–18) were published as shares of all travel and are converted here to rail ÷ (rail + air). Tokyo–Hiroshima and Tokyo–Fukuoka are from JR West's fact sheet. Top speed is the highest in service on any part of the route: Rome–Milan runs at 250 km/h south of Florence, Tokyo–Shin-Aomori at 260 km/h north of Morioka, Tokyo–Hiroshima at 285 km/h east of Osaka. Wuhan–Guangzhou returned to 350 km/h in June 2024; its time is the first reported 350 km/h run. Berlin–Munich's 3 h 55 is the 2017 Sprinter; regular trains take about four hours on a route that mixes new 300 km/h line with upgraded track.",l:[HSR,LK("Wikipedia — List of high-speed railway lines",W_+"List_of_high-speed_railway_lines"),LK("Hot Rails — Rail's market share against air, a global review of 132 city pairs","https://hotrails.net/2024/04/rails-market-share-against-air-a-global-review/"),LK("Transport Geography — Passenger rail market share against air for inter-city travel","https://transportgeography.org/contents/chapter5/rail-transportation-pipelines/passenger-rail-market-share-against-air-inter-city/"),LK("National Academies — mode share before and after high-speed rail (Paris–Marseille, Madrid–Barcelona)","https://www.nap.edu/read/22173/chapter/5"),LK("Ara — Madrid–Barcelona: 81.5 % chose the train over the plane in 2024","https://en.ara.cat/economy/high-speed-trains-between-barcelona-and-madrid-have-become-35-cheaper-since_1_5468261.html"),LK("Railway Gazette — Rome–Milan: rail 67 %, air 21 % by 2017–18","https://railwaygazette.com/high-speed/high-speed-rail-wins-market-share/55499.article"),LK("JR West fact sheet 2026 — Shinkansen share against air by city pair","https://www.westjr.co.jp/global/en/ir/library/fact-sheets/2026/pdf/fact07.pdf"),LK("L-IZ — Berlin–Munich one year on: 46 % rail, 30 % air","https://www.l-iz.de/wirtschaft/mobilitaet/2018/12/Die-Bahn-hat-ihre-Fahrgastzahlen-zwischen-Muenchen-und-Berlin-mehr-als-verdoppelt-247632"),LK("Trenitalia — Rome–Milan non-stop in 2 h 50","https://www.trenitalia.com/it/frecciarossa/collegamenti-frecciarossa/viaggia-tra-roma-e-milano-con-frecciarossa.app.html"),LK("The Paper — Wuhan–Guangzhou back to 350 km/h, June 2024","https://m.thepaper.cn/newsDetail_forward_27750324"),LK("Railway Gazette — Harbin–Dalian line opens","https://railwaygazette.com/infrastructure/harbin-dalian-pdl-opens/37552.article")]},
@@ -146,9 +160,14 @@ const GROUP_ICON={"Route & train":"train","Fares":"fare","Flights to SUB":"plane
 // ---------- inputs ----------
 const P0=v=>pct(v,0), MIN=v=>v+" min";
 const CTLS=[
- {g:"Route & train",id:"alignf",label:"Extension length vs the toll roads",min:0.8,max:1.1,step:0.01,def:1,fmt:v=>v.toFixed(2)+"×",note:"The toll roads from Bandung to Surabaya measure "+fmtNum(ROUTE.extKm,0)+" km. A railway built for 350 km/h cuts corners and would be shorter."},
+ {g:"Route & train",id:"alignf",min:0.8,max:1.1,step:0.01,def:1,fmt:v=>v.toFixed(2)+"×",
+  get label(){return RT.kind==="kcic"?"Extension length vs the published length":"Extension length vs the estimate";},
+  get note(){return RT.kind==="kcic"?"KCIC's study gives "+fmtNum(RT.extKm,2)+" km from Tegalluar to Surabaya for this alternative; 1.00× keeps that length."
+    :"Estimated at "+fmtNum(RT.extKm,0)+" km: the length as drawn plus "+pct(RT.stretch-1)+", the stretch that fits KCIC's three published lengths on average.";}},
  {g:"Route & train",id:"vmax",label:"Line speed",min:200,max:400,step:10,def:350,fmt:v=>v+" km/h",note:"Whoosh runs at 350 km/h. Most European and Japanese lines run at 300–320."},
- {g:"Route & train",id:"vurb",label:"Speed limit within 8 km of Jakarta, Bandung, Surabaya",min:80,max:350,step:10,def:200,fmt:v=>v+" km/h",note:"City approaches have tighter curves. Applies on both sides of Bandung, where every train stops anyway."},
+ {g:"Route & train",id:"vurb",min:80,max:350,step:10,def:200,fmt:v=>v+" km/h",
+  get label(){return RT.skipsBandung?"Speed limit within 8 km of Jakarta and Surabaya":"Speed limit within 8 km of Jakarta, Bandung, Surabaya";},
+  get note(){return RT.skipsBandung?"City approaches have tighter curves.":"City approaches have tighter curves. Applies on both sides of Bandung, where every train stops anyway.";}},
  {g:"Route & train",id:"pwr",label:"Traction power at the wheels",min:6,max:14,step:0.25,def:9.75,fmt:v=>v.toFixed(2)+" MW",note:"CR400AF, the parent design of Whoosh's KCIC400AF: 9.75 MW for 8 cars."},
  {g:"Route & train",id:"mass",label:"Train mass, loaded",min:400,max:600,step:10,def:500,fmt:v=>v+" t",note:"8-car set with "+SEATS+" seats."},
  {g:"Route & train",id:"acc",label:"Starting acceleration",min:0.3,max:1,step:0.05,def:0.5,fmt:v=>v.toFixed(2)+" m/s²",note:"Holds until traction power becomes the limit, at about "+"70–100 km/h."},
@@ -175,7 +194,8 @@ const CTLS=[
  {g:"Door to door",id:"fegr",label:"Juanda airport → destination",min:10,max:120,step:5,def:40,fmt:MIN,note:"Juanda is about 22 km by road from central Surabaya."},
  {g:"Door to door",id:"tacc",label:"Origin → Halim station",min:10,max:120,step:5,def:45,fmt:MIN,note:"The station is about 7 km by road from the airport terminal and on the LRT."},
  {g:"Door to door",id:"tpre",label:"At the station before departure",min:5,max:60,step:5,def:20,fmt:MIN},
- {g:"Door to door",id:"tegr",label:"Surabaya station → destination",min:10,max:120,step:5,def:35,fmt:MIN,note:"The modeled terminus at Waru is about 18 km by road from the city centre."},
+ {g:"Door to door",id:"tegr",label:"Surabaya station → destination",min:10,max:120,step:5,def:35,fmt:MIN,
+  get note(){return RT.terminus==="pasarturi"?"This route ends at Pasar Turi, in the city centre. The default suits a terminus at Waru, about 18 km out by road.":"The modeled terminus at Waru is about 18 km by road from the city centre.";}},
  {g:"Door to door",id:"vot",label:"Value of the traveller's time",min:0,max:500000,step:10000,def:100000,fmt:v=>fmtRp(v)+" / h",note:"Turns minutes into rupiah for the verdict. 0 = only the price matters."},
 
  {g:"Economics",id:"capex",label:"Construction cost of the extension",min:10,max:70,step:1,def:30,fmt:v=>"US$"+v+" M / km",note:"The first Whoosh line: about US$51 M/km. Chinese domestic lines: US$17–21 M/km."},
@@ -210,17 +230,17 @@ const CTLS=[
  {g:"Energy & environment",id:"oqual",dep:"offset",label:"Credit integrity (tonnes really removed per tonne bought)",min:0,max:1,step:0.05,def:0.5,fmt:P0,note:"Cheap avoidance credits 0.1–0.4; nature-based removal 0.6–0.9; durable removal ≈ 1."},
 ];
 const CTL=Object.fromEntries(CTLS.map(c=>[c.id,c]));
-const ALL=OPT.slice();
 const PRESETS=[
- {name:"Baseline — limited stops",note:"Cirebon, Semarang and Surakarta served, 350 km/h, today's fares and today's grid.",stops:DEFAULT_STOPS,set:{}},
- {name:"Express — mandatory stops only",note:"Jakarta, Padalarang, Tegalluar, Surabaya. The fastest the line can do.",stops:[],set:{}},
- {name:"All stops",note:"Every one of the twelve stations.",stops:ALL,set:{}},
- {name:"Optimist — the pitch",note:"A straighter and cheaper line, full trains, tight timetable, flights at peak fares.",stops:["semarang"],set:{alignf:0.9,capex:20,lf:0.8,trains:30,pad:0.05,ffare:1400000,cfare:1400000,wacc:0.03,tegr:25}},
- {name:"Sceptic — Whoosh costs repeat",note:"Construction at the first line's cost per km, 300 km/h, half-empty trains, cheap flights.",stops:ALL,set:{capex:51,lf:0.45,vmax:300,pad:0.15,ffare:900000,cfare:800000,wacc:0.07}},
- {name:"Clean grid",note:"Baseline on a grid at 100 gCO₂/kWh, as a net-zero power system would deliver.",stops:DEFAULT_STOPS,set:{grid:100}},
- {name:"Offsets on, cheap credits",note:"Both modes buy voluntary-market credits for all their emissions.",stops:DEFAULT_STOPS,set:{offset:1,oprice:Math.log10(8),oqual:0.3}},
- {name:"Offsets on, durable removal",note:"Both modes pay for engineered removal at US$300 per tonne.",stops:DEFAULT_STOPS,set:{offset:1,oprice:Math.log10(300),oqual:1}},
+ {name:"Baseline — limited stops",note:"The route's main cities served, 350 km/h, today's fares and today's grid.",stops:"def",set:{}},
+ {name:"Express — mandatory stops only",note:"Only the stops every train makes. The fastest the line can do.",stops:"none",set:{}},
+ {name:"All stops",note:"Every station on the route.",stops:"all",set:{}},
+ {name:"Optimist — the pitch",note:"A straighter and cheaper line, full trains, tight timetable, flights at peak fares.",stops:"key",set:{alignf:0.9,capex:20,lf:0.8,trains:30,pad:0.05,ffare:1400000,cfare:1400000,wacc:0.03,tegr:25}},
+ {name:"Sceptic — Whoosh costs repeat",note:"Construction at the first line's cost per km, 300 km/h, half-empty trains, cheap flights.",stops:"all",set:{capex:51,lf:0.45,vmax:300,pad:0.15,ffare:900000,cfare:800000,wacc:0.07}},
+ {name:"Clean grid",note:"Baseline on a grid at 100 gCO₂/kWh, as a net-zero power system would deliver.",stops:"def",set:{grid:100}},
+ {name:"Offsets on, cheap credits",note:"Both modes buy voluntary-market credits for all their emissions.",stops:"def",set:{offset:1,oprice:Math.log10(8),oqual:0.3}},
+ {name:"Offsets on, durable removal",note:"Both modes pay for engineered removal at US$300 per tonne.",stops:"def",set:{offset:1,oprice:Math.log10(300),oqual:1}},
 ];
+const presetStops=p=>p.stops==="all"?ALL:p.stops==="none"?[]:p.stops==="key"?[RT.key]:DEFAULT_STOPS;
 const state={}, stops=new Set(DEFAULT_STOPS);
 function ctlVal(c){const el=document.getElementById("in_"+c.id);if(c.type==="toggle")return el.checked?1:0;const raw=parseFloat(el.value);const v=c.log?Math.pow(10,raw):raw;return c.snap?c.snap(v):v;}
 function setCtl(c,raw){const el=document.getElementById("in_"+c.id);if(c.type==="toggle")el.checked=!!+raw;else el.value=raw;}
@@ -234,9 +254,9 @@ function buildControls(){
       const w=document.createElement("div");w.className="ctl";w.id="ctl_"+c.id;
       w.innerHTML=c.type==="toggle"
         ?`<label class="switch"><input type="checkbox" id="in_${c.id}"><span>${c.label}</span>${refBtn(c.id)}</label><output id="out_${c.id}" style="display:none"></output>${c.note?`<div class="note">${c.note}</div>`:""}`
-        :`<div class="row"><label for="in_${c.id}">${c.label}${refBtn(c.id)}</label><output id="out_${c.id}"></output></div>
+        :`<div class="row"><label for="in_${c.id}"><span id="lab_${c.id}">${c.label}</span>${refBtn(c.id)}</label><output id="out_${c.id}"></output></div>
         <input type="range" id="in_${c.id}" min="${c.min}" max="${c.max}" step="${c.step}" value="${c.def}">
-        ${c.note?`<div class="note">${c.note}</div>`:""}`;
+        ${c.note?`<div class="note" id="note_${c.id}">${c.note}</div>`:""}`;
       body.appendChild(w);
       w.querySelector("input").addEventListener("input",()=>{markCustom();update();});
     });
@@ -245,14 +265,34 @@ function buildControls(){
   const sel=document.getElementById("preset");
   sel.innerHTML=PRESETS.map((p,i)=>`<option value="${i}">${p.name}</option>`).join("")+`<option value="custom" hidden>Custom</option>`;
   sel.addEventListener("change",()=>{if(sel.value!=="custom")applyPreset(+sel.value);});
-  document.getElementById("stopList").innerHTML=ST.map(s=>`<label class="stop${s.must?" must":""}"><input type="checkbox" data-stop="${s.id}" ${s.must?"checked disabled":""}><span>${s.name}${s.must?'<span class="tag">always</span>':""}${s.built?"":'<span class="tag">new</span>'}</span><span class="km" id="km_${s.id}"></span></label>`).join("");
-  document.querySelectorAll("#stopList input").forEach(el=>el.addEventListener("change",()=>{el.checked?stops.add(el.dataset.stop):stops.delete(el.dataset.stop);markCustom();update();}));
+  document.getElementById("routeList").innerHTML=ROUTES.map((r,i)=>(i&&ROUTES[i-1].kind===r.kind?"":`<div class="rgroup">${ROUTE_GROUP[r.kind]}</div>`)+
+    `<label class="route"><input type="radio" name="route" value="${r.id}"><span><b>${routeTitle(r)}</b><small>via ${r.via} · ${extKmText(r)} · ${r.nStations} stations${r.nReserve?" + "+r.nReserve+" reserve":""}${r.pub?" · "+r.pub.min+" min":""}${r.skipsBandung?" · skips Bandung":""}</small></span></label>`).join("");
+  document.querySelectorAll("#routeList input").forEach(el=>el.addEventListener("change",()=>{if(el.checked)setRoute(el.value);}));
+  buildRouteUI();
   document.getElementById("stopsNone").onclick=()=>{stops.clear();markCustom();update();};
   document.getElementById("stopsAll").onclick=()=>{OPT.forEach(s=>stops.add(s));markCustom();update();};
-  document.getElementById("resetAll").onclick=()=>{sel.value="0";applyPreset(0);};
+  document.getElementById("resetAll").onclick=()=>{sel.value="0";useRoute(ROUTE_DEF);buildRouteUI();applyPreset(0);};
+}
+// Everything on the page that depends on which route is chosen but not on the sliders.
+function buildRouteUI(){
+  document.querySelectorAll("#routeList input").forEach(el=>{el.checked=el.value===RT.id;el.closest("label").classList.toggle("on",el.checked);});
+  document.getElementById("routeNote").textContent=RT.kind==="kcic"?"stations from the study's map":"not in either study";
+  document.getElementById("stopList").innerHTML=ST.map(s=>`<label class="stop${s.must?" must":""}"><input type="checkbox" data-stop="${s.id}" ${s.must?"checked disabled":""}><span>${s.name}${s.must?'<span class="tag">always</span>':""}${s.built?"":`<span class="tag">${s.reserve?"reserve":s.inferred?"inferred":"new"}</span>`}</span><span class="km" id="km_${s.id}"></span></label>`).join("");
+  document.querySelectorAll("#stopList input").forEach(el=>el.addEventListener("change",()=>{el.checked?stops.add(el.dataset.stop):stops.delete(el.dataset.stop);markCustom();update();}));
+  for(const id of ["alignf","vurb","tegr"]){document.getElementById("lab_"+id).textContent=CTL[id].label;document.getElementById("note_"+id).textContent=CTL[id].note;}
+  document.getElementById("patSub").textContent=fmtNum(N_PAT,0)+" combinations of optional stops, as the range for each number of stops";
+  document.getElementById("notes").innerHTML=NOTES().map(n=>`<li>${n}</li>`).join("");
+}
+// Switch route. Stops follow the preset in force, or the new route's main cities when the scenario is a custom one.
+function setRoute(id){
+  if(id===RT.id)return;
+  const pv=document.getElementById("preset").value,hadKarawang=stops.has("karawang");
+  useRoute(id);stops.clear();
+  if(pv!=="custom")presetStops(PRESETS[+pv]).forEach(x=>stops.add(x));else{DEFAULT_STOPS.forEach(x=>stops.add(x));if(hadKarawang)stops.add("karawang");}
+  buildRouteUI();update();
 }
 function markCustom(){document.getElementById("preset").value="custom";document.getElementById("presetNote").textContent="Custom scenario.";}
-function applyPreset(i){const p=PRESETS[i];CTLS.forEach(c=>setCtl(c,p.set[c.id]!==undefined?p.set[c.id]:c.def));stops.clear();p.stops.forEach(s=>stops.add(s));document.getElementById("presetNote").textContent=p.note;update();}
+function applyPreset(i){const p=PRESETS[i];CTLS.forEach(c=>setCtl(c,p.set[c.id]!==undefined?p.set[c.id]:c.def));stops.clear();presetStops(p).forEach(s=>stops.add(s));document.getElementById("presetNote").textContent=p.note;update();}
 function toggleStop(id){if(!OPT.includes(id))return;stops.has(id)?stops.delete(id):stops.add(id);markCustom();update();}
 
 // ---------- model ----------
@@ -263,9 +303,9 @@ function mkTrain(s,vmaxKmh){
   return {m,meff,R,acc,dec:s.dec,vmax:(vmaxKmh??s.vmax)/3.6,vurb:Math.min(s.vurb,vmaxKmh??s.vmax)/3.6};
 }
 // One run between two consecutive stops (km positions a < b). Forward pass: traction; backward pass: braking.
-function simLeg(a,b,tr,total,keep){
+function simLeg(a,b,tr,zones,keep){
   const n=Math.max(2,Math.round((b-a)/DS)), h=(b-a)/n*1000, v=new Float64Array(n+1), lim=new Float64Array(n+1);
-  for(let i=0;i<=n;i++){const x=a+(b-a)*i/n;lim[i]=(x<=ZONE_KM||Math.abs(x-B_KM)<=ZONE_KM||x>=total-ZONE_KM)?tr.vurb:tr.vmax;}
+  for(let i=0;i<=n;i++){const x=a+(b-a)*i/n;lim[i]=zones.some(z=>Math.abs(x-z)<=ZONE_KM)?tr.vurb:tr.vmax;}
   for(let i=0;i<n;i++)v[i+1]=Math.min(lim[i+1],Math.sqrt(Math.max(0,v[i]*v[i]+2*tr.acc(v[i])*h)));
   v[n]=0;for(let i=n-1;i>0;i--){const vb=Math.sqrt(v[i+1]*v[i+1]+2*tr.dec*h);if(vb<v[i])v[i]=vb;}
   let t=0,Et=0,Er=0,vm=0;const ts=keep?new Float64Array(n+1):null;
@@ -277,16 +317,16 @@ const crf=(r,n)=>r>0?r/(1-Math.pow(1+r,-n)):1/n;
 function model(s,stopSet){
   const m={};
   const km=k=>k<=B_KM?k:B_KM+(k-B_KM)*s.alignf;
-  m.km=km; m.ext=ROUTE.extKm*s.alignf; m.L=B_KM+m.ext;
+  m.km=km; m.ext=RT.extKm*s.alignf; m.L=B_KM+m.ext; m.zones=zonesFor(RT,m.L);
   m.pos=ST.map(x=>km(x.km));
   const tr=mkTrain(s); m.tr=tr;
   // leg cache: fastest run between any two stations
-  const cache=new Map(), leg=(i,j,keep)=>{const k=i+"-"+j+(keep?"k":"");let r=cache.get(k);if(!r){r=simLeg(m.pos[i],m.pos[j],tr,m.L,keep);cache.set(k,r);}return r;};
+  const cache=new Map(), leg=(i,j,keep)=>{const k=i+"-"+j+(keep?"k":"");let r=cache.get(k);if(!r){r=simLeg(m.pos[i],m.pos[j],tr,m.zones,keep);cache.set(k,r);}return r;};
   const journey=(idx,keep)=>{let run=0,Et=0,Er=0;const legs=[];for(let k=1;k<idx.length;k++){const r=leg(idx[k-1],idx[k],keep);legs.push(r);run+=r.t;Et+=r.Et;Er+=r.Er;}
     const T=run*(1+s.pad)+s.dwell*60*(idx.length-2);return {legs,run,T,Et,Er};};
-  const fare=(Lkm,Tsec,N)=>{const sd=Math.max(0,1-s.st-s.ss);const p=[sd*Math.pow(Lkm/B_KM,s.beta),s.st*Tsec/m.Tref,s.ss*N/N_REF];return {parts:p.map(x=>x*s.fjb),total:s.fjb*(p[0]+p[1]+p[2])};};
+  const fare=(Lkm,Tsec,N)=>{const sd=Math.max(0,1-s.st-s.ss);const p=[sd*Math.pow(Lkm/WHOOSH_KM,s.beta),s.st*Tsec/m.Tref,s.ss*N/N_REF];return {parts:p.map(x=>x*s.fjb),total:s.fjb*(p[0]+p[1]+p[2])};};
   // reference service the fare is calibrated on: Halim – Karawang – Padalarang – Tegalluar
-  m.Tref=journey(REF_IDX).T;
+  { const R=ROUTE.refKm;let run=0;for(let k=1;k<R.length;k++)run+=simLeg(R[k-1],R[k],tr,[0,WHOOSH_KM],false).t;m.Tref=run*(1+s.pad)+s.dwell*60*(N_REF-2); }
   // chosen pattern
   m.idx=ST.map((x,i)=>i).filter(i=>ST[i].must||stopSet.has(ST[i].id));
   const J=journey(m.idx,true); m.J=J; m.T=J.T; m.Tmin=J.T/60; m.nStops=m.idx.length;
@@ -294,7 +334,7 @@ function model(s,stopSet){
   // arrival time (s) at each served stop and fare from Jakarta
   m.arr=[0];for(let k=1;k<m.idx.length;k++)m.arr.push(m.arr[k-1]+J.legs[k-1].t*(1+s.pad)+(k>1?s.dwell*60:0));
   m.fares=m.idx.map((i,k)=>k?fare(m.pos[i],m.arr[k],k+1):{parts:[0,0,0],total:0});
-  m.fare=m.fares[m.fares.length-1]; m.fareJB=m.fares[m.idx.indexOf(I_BDG)];
+  m.fare=m.fares[m.fares.length-1]; m.fareJB=I_BDG>=0?m.fares[m.idx.indexOf(I_BDG)]:null;
   // energy at the overhead line
   const totalSec=J.T;
   m.Etrac=J.Et/s.eta/3.6e6; m.Eregen=J.Er*s.regen*s.eta/3.6e6; m.Eaux=s.aux*totalSec/3600; m.E=m.Etrac-m.Eregen+m.Eaux; // kWh
@@ -340,12 +380,18 @@ function model(s,stopSet){
   // carbon payback of building the extension
   m.embExt=s.infraco2*m.ext; const save=(m.air.gross-m.air.apt-m.rail.op-m.rail.veh)*f*m.ridersYr*s.divert/1000; // airports already exist, so their share is not saved
   m.payback=save>0?m.embExt/save:Infinity;
-  // every stopping pattern
-  m.patterns=[];for(let mask=0;mask<N_PAT;mask++){const idx=[0];ST.forEach((x,i)=>{if(i&&(x.must||mask>>OPT.indexOf(x.id)&1))idx.push(i);});const j=journey(idx);const fr=fare(m.L,j.T,idx.length).total;
-    m.patterns.push({mask,n:idx.length,T:j.T/60,fare:fr,names:idx.slice(1,-1).filter(i=>!ST[i].must).map(i=>SHORT[ST[i].id])});}
-  m.curMask=OPT.reduce((a,id,k)=>a|(stopSet.has(id)?1<<k:0),0);
+  // every stopping pattern: there are thousands, so only the fastest and slowest for each number of stops
+  const patFare=(T,n)=>fare(m.L,T,n).total, names=idx=>idx.slice(1,-1).filter(i=>!ST[i].must).map(i=>SHORT[ST[i].id]);
+  m.patCur={n:m.idx.length,T:J.T/60,fare:patFare(J.T,m.idx.length),names:names(m.idx)};
+  { // best[j][c] = least (or most) running time to station j when j is served and c optional stations up to j are served
+    const n=ST.length,K=OPT.length,lastMust=ST.map((x,i)=>{let k=i-1;while(k>0&&!ST[k].must)k--;return Math.max(0,k);});
+    const dp=sgn=>{const best=ST.map(()=>new Float64Array(K+1).fill(Infinity)),from=ST.map(()=>new Int16Array(K+1).fill(-1));best[0][0]=0;
+      for(let j=1;j<n;j++){const o=ST[j].must?0:1;for(let i=lastMust[j];i<j;i++){const t=sgn*leg(i,j).t;for(let c=0;c+o<=K;c++){const v=best[i][c]+t;if(v<best[j][c+o]){best[j][c+o]=v;from[j][c+o]=i;}}}}
+      return c=>{const idx=[];for(let j=n-1,k=c;j>=0;){idx.unshift(j);const i=from[j][k];if(i<0)break;k-=ST[j].must?0:1;j=i;}const N=idx.length,T=sgn*best[n-1][c]*(1+s.pad)+s.dwell*60*(N-2);return {n:N,T:T/60,fare:patFare(T,N),names:names(idx)};};};
+    const lo=dp(1),hi=dp(-1);m.patRanges=[];for(let c=0;c<=K;c++)m.patRanges.push({c,lo:lo(c),hi:hi(c)});
+  }
   // sensitivity to line speed
-  m.sens=[];for(let v=200;v<=400;v+=10){const t2=mkTrain(s,v);let run=0;for(let k=1;k<m.idx.length;k++)run+=simLeg(m.pos[m.idx[k-1]],m.pos[m.idx[k]],t2,m.L,false).t;m.sens.push([v,(run*(1+s.pad)+s.dwell*60*(m.idx.length-2))/60]);}
+  m.sens=[];for(let v=200;v<=400;v+=10){const t2=mkTrain(s,v);let run=0;for(let k=1;k<m.idx.length;k++)run+=simLeg(m.pos[m.idx[k-1]],m.pos[m.idx[k]],t2,m.zones,false).t;m.sens.push([v,(run*(1+s.pad)+s.dwell*60*(m.idx.length-2))/60]);}
   // verdicts
   const dT=m.d2dRail.total-m.d2dAir.total, dP=m.priceRail-m.priceAir;
   const tWord=Math.abs(dT)<3?"the same time":fmtDur(Math.abs(dT))+(dT<0?" faster":" slower"), pWord=Math.abs(dP)<5000?"the same price":fmtRp(Math.abs(dP))+(dP<0?" cheaper":" dearer");
@@ -448,14 +494,14 @@ function update(){
       ["Per train-km · per seat-km",fmtNum(m.E/m.L,1)+" kWh · "+fmtNum(m.E/m.L/SEATS*1000,0)+" Wh","published for Fuxing: ≈ 38 Wh per passenger-km at 350 km/h; 17.3 kWh per train-km over a duty cycle"],
     ])}</div>`+
    `<div class="card"><h2>${ico("fare")}Fare build-up${refBtn("beta")}<span>scaled from the Jakarta–Bandung fare</span></h2>${kv([
-      ["Jakarta–Bandung fare today"+refBtn("fjb"),fmtRp(s.fjb),"F₀ · Rp "+fmtNum(s.fjb/B_KM,0)+"/km over 142.3 km"],
+      ["Jakarta–Bandung fare today"+refBtn("fjb"),fmtRp(s.fjb),"F₀ · Rp "+fmtNum(s.fjb/WHOOSH_KM,0)+"/km over 142.3 km"],
       ["Distance part",fmtRp(m.fare.parts[0]),`F₀ × ${pct(sd)} × (${fmtNum(m.L,0)} ÷ 142.3)^${s.beta.toFixed(2)}`],
       ["Time part"+refBtn("st"),fmtRp(m.fare.parts[1]),`F₀ × ${pct(s.st)} × ${fmtDur(m.Tmin)} ÷ ${fmtDur(m.Tref/60)}`],
       ["Station part"+refBtn("ss"),fmtRp(m.fare.parts[2]),`F₀ × ${pct(s.ss)} × ${m.nStops} stations ÷ ${N_REF}`],
       ["Jakarta–Surabaya fare",fmtRp(m.fare.total),"",true],
-      ["Per km",`Rp ${fmtNum(m.fare.total/m.L,0)}`,"Jakarta–Bandung: Rp "+fmtNum(s.fjb/B_KM,0)+" · the average flight: Rp "+fmtNum(m.fareAir/m.gc,0)],
-      ["Pure per-km extrapolation",fmtRp(s.fjb*m.L/B_KM),"F₀ × L ÷ 142.3, ignoring taper, time and stations"],
-      ["Jakarta–Bandung in this pattern",fmtRp(m.fareJB.total),stops.has("karawang")?"same service as today":"cheaper than today: no Karawang stop"],
+      ["Per km",`Rp ${fmtNum(m.fare.total/m.L,0)}`,"Jakarta–Bandung: Rp "+fmtNum(s.fjb/WHOOSH_KM,0)+" · the average flight: Rp "+fmtNum(m.fareAir/m.gc,0)],
+      ["Pure per-km extrapolation",fmtRp(s.fjb*m.L/WHOOSH_KM),"F₀ × L ÷ 142.3, ignoring taper, time and stations"],
+      ...(m.fareJB?[["Jakarta–Bandung in this pattern",fmtRp(m.fareJB.total),stops.has("karawang")?"same service as today":"cheaper than today: no Karawang stop"]]:[]),
       ["Benchmarks"+refBtn("r_bench"),"Rp "+fmtNum(600*2700/1318,0)+" · Rp "+fmtNum(14720*114/515,0)+" /km","Beijing–Shanghai · Tokyo–Osaka, at 1 yuan ≈ Rp 2,700 and 1 yen ≈ Rp 114"],
     ])}</div>`+
    `<div class="card"><h2>${ico("plane")}The flights<span>two Jakarta airports → Juanda</span></h2>${cmp([["HLP","a"],["CGK","a2"]],[
@@ -517,7 +563,7 @@ function update(){
    `<div class="card" style="grid-column:1/-1"><h2>${ico("economics")}Economics of the extension${refBtn("sec_econ")}<span>Bandung → Surabaya only · per year · the first line is treated as built</span></h2>
       <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px">
       <div>${kv([
-        ["Length to build",fmtNum(m.ext,0)+" km",fmtNum(ROUTE.extKm,0)+" km of toll road × "+s.alignf.toFixed(2)],
+        ["Length to build",fmtNum(m.ext,0)+" km",RT.kind==="kcic"?fmtNum(RT.extKm,2)+" km published × "+s.alignf.toFixed(2):fmtNum(RT.extKm,0)+" km estimated × "+s.alignf.toFixed(2)],
         ["Construction cost"+refBtn("capex"),usd(m.capex),"L_ext × US$"+s.capex+" M · "+fmtRp(m.capex)],
         ["Yearly payment on construction"+refBtn("wacc"),fmtRp(m.annCap),`capex × CRF(${pct(s.wacc,2)}, ${s.life} yr) = ${pct(crf(s.wacc,s.life),2)}`],
         ["Trainsets needed for the whole line",m.sets+" sets","trips × (ride + 30 min turnaround) ÷ 18 h service day, + 10 % spare · Whoosh owns 11"],
@@ -540,14 +586,14 @@ function update(){
         ["Break-even load factor",m.beLF<=1?pct(m.beLF):"> 100 %"+flag("not reachable","bad"),"at the current fare and train count"],
       ])}</div></div></div>`;
 
-  drawSpeed(m,s);drawD2D(m,s);drawGC(m,s);drawCO2(m,s);drawPatterns(m,s);drawSens(m,s);drawEcon(m,s);drawPeers(m,s);drawMap(m,s);
+  drawSpeed(m,s);drawD2D(m,s);drawGC(m,s);drawCO2(m,s);drawPatterns(m,s);drawSens(m,s);drawEcon(m,s);drawPeers(m,s);drawMap(m,s);drawRoutes(m,s);
 }
 
 // ---------- charts ----------
 const C_RAIL="var(--s1)",C_AIR="var(--s2)";
 let SP=null; // geometry of the speed chart, for hover
 function drawSpeed(m,s){
-  const W=1100,H=350,l=48,r=16,t=44,b=62,pw=W-l-r,ph=H-t-b;
+  const W=1100,l=48,r=16,t=58,b=62,H=364,pw=W-l-r,ph=H-t-b;
   const ymax=Math.ceil((Math.max(s.vmax,300)+20)/50)*50, X=k=>l+pw*k/m.L, Y=v=>t+ph*(1-v/ymax);
   let g=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Speed profile">`;
   g+=`<rect x="${X(0)}" y="${t}" width="${X(B_KM)-X(0)}" height="${ph}" fill="var(--s1)" opacity=".06"/><rect x="${X(B_KM)}" y="${t}" width="${X(m.L)-X(B_KM)}" height="${ph}" fill="var(--s3)" opacity=".05"/>`;
@@ -555,13 +601,12 @@ function drawSpeed(m,s){
   g+=`<text x="12" y="${t+ph/2}" transform="rotate(-90 12 ${t+ph/2})" text-anchor="middle" font-size="11" fill="var(--muted)">km/h</text>`;
   for(let k=0;k<=m.L;k+=100)g+=`<text x="${X(k)}" y="${t+ph+14}" text-anchor="middle" font-size="11" fill="var(--muted)">${k}</text>`;
   
-  // toll band
+  // band: the built line and the new one
   const by=t+ph+22,bh=16;
-  g+=`<rect x="${X(0)}" y="${by}" width="${X(B_KM)-X(0)-1}" height="${bh}" rx="2" fill="var(--s1)" opacity=".35" data-tip="Built Whoosh line, 142.3 km, alongside the Jakarta–Cikampek and Cipularang toll roads"/><text x="${(X(0)+X(B_KM))/2}" y="${by+11.5}" text-anchor="middle" font-size="9.5" fill="var(--text)" pointer-events="none">Whoosh today</text>`;
-  ROUTE.tolls.forEach((tl,i)=>{const x0=X(m.km(tl.from)),x1=X(m.km(tl.to)),w=x1-x0;
-    g+=`<rect x="${x0.toFixed(1)}" y="${by}" width="${Math.max(1,w-1).toFixed(1)}" height="${bh}" rx="2" fill="var(--s3)" opacity="${i%2?0.3:0.5}" data-tip="${esc(tl.name)} toll road · km ${fmtNum(m.km(tl.from),0)}–${fmtNum(m.km(tl.to),0)}"/>`;
-    if(w>tl.name.length*5.1+6)g+=`<text x="${((x0+x1)/2).toFixed(1)}" y="${by+11.5}" text-anchor="middle" font-size="9.5" fill="var(--text)" pointer-events="none">${tl.name}</text>`;});
-  g+=`<text x="${l}" y="${by+bh+13}" font-size="10.5" fill="var(--muted)">km from Halim · band: toll road followed (hover for names)</text>`;
+  g+=`<rect x="${X(0)}" y="${by}" width="${X(B_KM)-X(0)-1}" height="${bh}" rx="2" fill="var(--s1)" opacity=".35" data-tip="${RT.skipsBandung?"Built Whoosh line as far as Karawang, "+fmtNum(B_KM,1)+" km":"Built Whoosh line, 142.3 km, alongside the Jakarta–Cikampek and Cipularang toll roads"}"/>${X(B_KM)-X(0)>70?`<text x="${(X(0)+X(B_KM))/2}" y="${by+11.5}" text-anchor="middle" font-size="9.5" fill="var(--text)" pointer-events="none">Whoosh today</text>`:""}`;
+  { const x0=X(B_KM),x1=X(m.L);
+    g+=`<rect x="${x0.toFixed(1)}" y="${by}" width="${(x1-x0).toFixed(1)}" height="${bh}" rx="2" fill="var(--s3)" opacity=".4" data-tip="${esc(routeTitle(RT)+" · schematic alignment · km "+fmtNum(B_KM,0)+"–"+fmtNum(m.L,0))}"/><text x="${((x0+x1)/2).toFixed(1)}" y="${by+11.5}" text-anchor="middle" font-size="9.5" fill="var(--text)" pointer-events="none">${routeTitle(RT)} · via ${RT.via}</text>`;}
+  g+=`<text x="${l}" y="${by+bh+13}" font-size="10.5" fill="var(--muted)">km from Halim · band: built line and the route chosen</text>`;
   // limit and speed
   let lim="",sp="",px=[],pv=[],pt=[];
   m.J.legs.forEach((lg,k)=>{const t0=m.arr[k]+(k?s.dwell*60:0);
@@ -569,9 +614,14 @@ function drawSpeed(m,s){
       lim+=(lim?"L":"M")+X(x).toFixed(1)+" "+Y(lg.lim[i]*3.6).toFixed(1);sp+=(sp?"L":"M")+X(x).toFixed(1)+" "+Y(lg.v[i]*3.6).toFixed(1);}});
   g+=`<path d="${sp}L${X(m.L)} ${Y(0)}L${X(0)} ${Y(0)}Z" fill="var(--s1)" opacity=".13"/><path d="${lim}" fill="none" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4 3"/><path d="${sp}" fill="none" stroke="var(--s1)" stroke-width="2" stroke-linejoin="round"/>`;
   // stations
-  ST.forEach((x,i)=>{const k=m.idx.indexOf(i),sx=X(m.pos[i]),row=i%2,served=k>=0,anchor=i===0?"start":i===ST.length-1?"end":"middle";
+  // labels: each goes in the lowest of three rows that is still free; one that fits nowhere is left out
+  const rowEnd=[-1e9,-1e9,-1e9];
+  ST.forEach((x,i)=>{const k=m.idx.indexOf(i),sx=X(m.pos[i]),served=k>=0,anchor=i===0?"start":i===ST.length-1?"end":"middle";
     g+=`<line x1="${sx}" x2="${sx}" y1="${t-4}" y2="${t+ph}" stroke="${served?"var(--text-2)":"var(--muted)"}" stroke-width="${served?1:0.7}" stroke-dasharray="${served?"":"2 4"}" opacity="${served?0.55:0.5}"/>`;
-    g+=`<text x="${sx}" y="${row?t-9:t-23}" text-anchor="${anchor}" font-size="11.5" font-weight="${served?650:400}" fill="${served?"var(--text)":"var(--muted)"}">${SHORT[x.id]}${served&&k?` <tspan font-weight="400" fill="var(--text-2)">${fmtHM(m.arr[k]/60)}</tspan>`:""}</text>`;});
+    const name=SHORT[x.id],time=served&&k?fmtHM(m.arr[k]/60):"";let y=t-9,showTime=!!time;
+    { const fit=w=>{const x0=anchor==="start"?sx:anchor==="end"?sx-w:sx-w/2,row=rowEnd.findIndex(e=>e+8<=x0);if(row<0)return false;rowEnd[row]=x0+w;y=t-9-14*row;return true;};
+      const wn=name.length*(served?6.9:6.1);if(!(time&&fit(wn+31))){showTime=false;if(!fit(wn))return;}}
+    g+=`<text x="${sx}" y="${y}" text-anchor="${anchor}" font-size="11.5" font-weight="${served?650:400}" fill="${served?"var(--text)":"var(--muted)"}">${name}${showTime?` <tspan font-weight="400" fill="var(--text-2)">${time}</tspan>`:""}</text>`;});
   g+=`<g id="spCur" style="display:none"><line id="spLine" y1="${t}" y2="${t+ph}" stroke="var(--text)" stroke-width="1" opacity=".6"/><circle id="spDot" r="4.5" fill="var(--s1)" stroke="#fff" stroke-width="1.5"/></g>`;
   g+=`<rect class="hit" id="spHit" x="${l}" y="${t}" width="${pw}" height="${ph}" fill="transparent"/></svg>`;
   document.getElementById("chartSpeed").innerHTML=g;
@@ -579,10 +629,10 @@ function drawSpeed(m,s){
   const hit=document.getElementById("spHit"),svg=hit.ownerSVGElement;
   hit.addEventListener("mousemove",e=>{const rc=svg.getBoundingClientRect(),xs=(e.clientX-rc.left)/rc.width*W,k=Math.max(0,Math.min(m.L,(xs-l)/pw*m.L));
     let lo=0,hi=px.length-1;while(hi-lo>1){const mid=(lo+hi)>>1;if(px[mid]<k)lo=mid;else hi=mid;}
-    const i=k-px[lo]<px[hi]-k?lo:hi,raw=px[i]<=B_KM?px[i]:B_KM+(px[i]-B_KM)/s.alignf,tl=ROUTE.tolls.find(q=>raw>=q.from&&raw<=q.to);
+    const i=k-px[lo]<px[hi]-k?lo:hi,raw=px[i]<=B_KM?px[i]:B_KM+(px[i]-B_KM)/s.alignf;
     document.getElementById("spCur").style.display="";const ln=document.getElementById("spLine"),dot=document.getElementById("spDot");
     ln.setAttribute("x1",X(px[i]));ln.setAttribute("x2",X(px[i]));dot.setAttribute("cx",X(px[i]));dot.setAttribute("cy",Y(pv[i]));
-    showTip(e,`<b>km ${fmtNum(px[i],0)}</b> · ${fmtNum(pv[i],0)} km/h · ${fmtDur(pt[i]/60)} from Halim<br><span style="color:var(--text-2)">${raw<=B_KM?"built Whoosh line":tl?esc(tl.name)+" toll road":"toll interchange"}</span>`);
+    showTip(e,`<b>km ${fmtNum(px[i],0)}</b> · ${fmtNum(pv[i],0)} km/h · ${fmtDur(pt[i]/60)} from Halim<br><span style="color:var(--text-2)">${raw<=B_KM?"built Whoosh line":esc(routeTitle(RT))}</span>`);
     moveTrain(raw);});
   hit.addEventListener("mouseleave",()=>{document.getElementById("spCur").style.display="none";hideTip();moveTrain(null);});
 }
@@ -613,7 +663,7 @@ function axes(W,H,l,r,t,b,x0,x1,y0,y1,xf,yf,xl,yl){
   return {g,X,Y,pw,ph};
 }
 function drawPatterns(m,s){
-  const W=560,H=300,l=56,r=14,t=14,b=40,P=m.patterns;
+  const W=560,H=300,l=56,r=14,t=14,b=40,P=[m.patCur,...m.patRanges.flatMap(q=>[q.lo,q.hi])];
   const ts=P.map(p=>p.T/60),fs=P.map(p=>p.fare/1e6),par=m.parity/60,ff=m.fareAir/1e6;
   const pad=(a,b2,f)=>[a-(b2-a)*f,b2+(b2-a)*f];
   let [x0,x1]=pad(Math.min(...ts,par),Math.max(...ts,par),0.08),[y0,y1]=pad(Math.min(...fs,ff),Math.max(...fs,ff),0.1);
@@ -625,10 +675,12 @@ function drawPatterns(m,s){
   if(par>x0&&par<x1)g+=`<line x1="${cx}" x2="${cx}" y1="${t}" y2="${t+A.ph}" stroke="var(--s2)" stroke-dasharray="5 4"/><text x="${cx-l>150?cx-5:cx+5}" y="${t+11}" text-anchor="${cx-l>150?"end":"start"}" font-size="10.5" fill="var(--s2)">ties the average flight door to door</text>`;
   if(ff>y0&&ff<y1)g+=`<line x1="${l}" x2="${W-r}" y1="${cy}" y2="${cy}" stroke="var(--s2)" stroke-dasharray="5 4"/><text x="${W-r-4}" y="${cy-5}" text-anchor="end" font-size="10.5" fill="var(--s2)">average flight fare</text>`;
   if(cx-l>120&&t+A.ph-cy>24)g+=`<text x="${l+6}" y="${t+A.ph-7}" font-size="10.5" fill="var(--s3)">faster and cheaper than flying</text>`;
-  const col=n=>["#b4d2f7","#9cc4f4","#7fb3f1","#62a2ee","#4a93ea","#3987e5","#2a78d8","#1f66bd","#174f94"][n-N_MUST];
-  P.forEach(p=>{if(p.mask===m.curMask)return;g+=`<circle cx="${A.X(p.T/60).toFixed(1)}" cy="${A.Y(p.fare/1e6).toFixed(1)}" r="4" fill="${col(p.n)}" opacity=".8" data-tip="${esc((p.names.length?p.names.join(", "):"No optional stops")+" · "+fmtDur(p.T)+" · "+fmtRp(p.fare))}"/>`;});
-  const c=P[m.curMask];g+=`<circle cx="${A.X(c.T/60).toFixed(1)}" cy="${A.Y(c.fare/1e6).toFixed(1)}" r="7" fill="${col(c.n)}" stroke="#fff" stroke-width="2" data-tip="${esc("Current: "+(c.names.length?c.names.join(", "):"no optional stops")+" · "+fmtDur(c.T)+" · "+fmtRp(c.fare))}"/>`;
-  g+=`</svg><div class="legend"><span><i style="background:#b4d2f7;border-radius:50%"></i>express</span><span><i style="background:#174f94;border-radius:50%"></i>all stops</span><span><i style="background:#3987e5;border:2px solid #fff;border-radius:50%"></i>current pattern</span><span>Patterns with the same number of stops nearly coincide: each stop costs about the same.</span></div>`;
+  const SH=["#b4d2f7","#9cc4f4","#7fb3f1","#62a2ee","#4a93ea","#3987e5","#2a78d8","#1f66bd","#174f94"],col=n=>SH[Math.round((n-N_MUST)/OPT.length*8)];
+  const what=p=>p.names.length?p.names.join(", "):"no optional stops",pt=p=>A.X(p.T/60).toFixed(1)+" "+A.Y(p.fare/1e6).toFixed(1);
+  m.patRanges.forEach(q=>{const one=q.hi.T-q.lo.T<1e-6,tip=q.c+" optional stops · "+(one?what(q.lo)+" · "+fmtDur(q.lo.T)+" · "+fmtRp(q.lo.fare):"fastest "+fmtDur(q.lo.T)+": "+what(q.lo)+" · slowest "+fmtDur(q.hi.T)+": "+what(q.hi)+" · "+fmtRp(q.lo.fare)+"–"+fmtRp(q.hi.fare));
+    g+=`<path d="M${pt(q.lo)}L${pt(q.hi)}" fill="none" stroke="${col(q.lo.n)}" stroke-width="8" stroke-linecap="round" opacity=".85" data-tip="${esc(tip)}"/>`;});
+  const c=m.patCur;g+=`<circle cx="${A.X(c.T/60).toFixed(1)}" cy="${A.Y(c.fare/1e6).toFixed(1)}" r="7" fill="${col(c.n)}" stroke="#fff" stroke-width="2" data-tip="${esc("Current: "+what(c)+" · "+fmtDur(c.T)+" · "+fmtRp(c.fare))}"/>`;
+  g+=`</svg><div class="legend"><span><i style="background:#b4d2f7;border-radius:50%"></i>express</span><span><i style="background:#174f94;border-radius:50%"></i>all stops</span><span><i style="background:#3987e5;border:2px solid #fff;border-radius:50%"></i>current pattern</span><span>Each bar runs from the fastest to the slowest pattern with that many stops; they nearly coincide, because each stop costs about the same.</span></div>`;
   document.getElementById("chartPatterns").innerHTML=g;
 }
 function drawSens(m,s){
@@ -695,10 +747,9 @@ function drawPeers(m,s){
 const MAPV={W:1000,lo0:105.75,lo1:113.75,la1:-5.55,la0:-8.75};
 MAPV.kx=MAPV.W/(MAPV.lo1-MAPV.lo0);MAPV.ky=MAPV.kx/Math.cos(7.2*Math.PI/180);MAPV.H=Math.round((MAPV.la1-MAPV.la0)*MAPV.ky);
 const MX=lon=>(lon-MAPV.lo0)*MAPV.kx, MY=lat=>(MAPV.la1-lat)*MAPV.ky;
-function posAt(raw){const ln=ROUTE.line;let lo=0,hi=ln.length-1;while(hi-lo>1){const mid=(lo+hi)>>1;if(ln[mid][2]<raw)lo=mid;else hi=mid;}const a=ln[lo],b=ln[hi],f=b[2]>a[2]?Math.max(0,Math.min(1,(raw-a[2])/(b[2]-a[2]))):0;return [a[0]+f*(b[0]-a[0]),a[1]+f*(b[1]-a[1])];}
+function posAt(raw){const ln=RT.line;let lo=0,hi=ln.length-1;while(hi-lo>1){const mid=(lo+hi)>>1;if(ln[mid][2]<raw)lo=mid;else hi=mid;}const a=ln[lo],b=ln[hi],f=b[2]>a[2]?Math.max(0,Math.min(1,(raw-a[2])/(b[2]-a[2]))):0;return [a[0]+f*(b[0]-a[0]),a[1]+f*(b[1]-a[1])];}
 const MAP_STATIC=(()=>{
-  const {W,H}=MAPV,A=ROUTE.airports,ln=ROUTE.line;
-  const path=(a,b)=>ln.filter(p=>p[2]>=a&&p[2]<=b).map((p,i)=>(i?"L":"M")+MX(p[0]).toFixed(1)+" "+MY(p[1]).toFixed(1)).join("");
+  const {W,H}=MAPV,A=ROUTE.airports;
   let g=`<rect width="${W}" height="${H}" fill="#0b0d12"/>`;
   g+=`<path d="${ROUTE.land.map(r=>r.map((p,i)=>(i?"L":"M")+MX(p[0]).toFixed(1)+" "+MY(p[1]).toFixed(1)).join("")+"Z").join("")}" fill="#1b1e25" stroke="#3a3d47" stroke-width="1" stroke-linejoin="round"/>`;
   g+=`<text x="${MX(109.6)}" y="${MY(-5.95)}" text-anchor="middle" font-size="13" font-style="italic" fill="#4b4e59" letter-spacing="3">JAVA SEA</text><text x="${MX(109.2)}" y="${MY(-8.5)}" text-anchor="middle" font-size="13" font-style="italic" fill="#4b4e59" letter-spacing="3">INDIAN OCEAN</text>`;
@@ -706,18 +757,29 @@ const MAP_STATIC=(()=>{
   const sb=100/ (111.32*Math.cos(7.2*Math.PI/180))*MAPV.kx;
   g+=`<g transform="translate(${W-sb-18},${H-16})"><path d="M0 -5V0H${sb.toFixed(1)}V-5" fill="none" stroke="var(--muted)"/><text x="${(sb/2).toFixed(1)}" y="-5" text-anchor="middle" font-size="10.5" fill="var(--muted)">100 km</text></g>`;
   g+=`<line x1="${MX(A.CGK.lon)}" y1="${MY(A.CGK.lat)}" x2="${MX(A.SUB.lon)}" y2="${MY(A.SUB.lat)}" stroke="var(--cgk)" stroke-width="2" stroke-dasharray="7 6" data-tip="CGK–SUB flight · ${fmtNum(GC_CGK,0)} km great circle"/>`;
+  g+=`<path d="${ROUTE.whoosh.map((p,i)=>(i?"L":"M")+MX(p[0]).toFixed(1)+" "+MY(p[1]).toFixed(1)).join("")}" fill="none" stroke="var(--s1)" stroke-width="2.5" stroke-linejoin="round" opacity=".4" data-tip="Built Whoosh line, 142.3 km"/>`;
   g+=`<line x1="${MX(A.HLP.lon)}" y1="${MY(A.HLP.lat)}" x2="${MX(A.SUB.lon)}" y2="${MY(A.SUB.lat)}" stroke="var(--s2)" stroke-width="2" stroke-dasharray="7 6" data-tip="HLP–SUB flight · ${fmtNum(GC_KM,0)} km great circle"/>`;
-  g+=`<path d="${path(B_KM,1e9)}" fill="none" stroke="var(--s3)" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/><path d="${path(0,B_KM)}" fill="none" stroke="var(--s1)" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>`;
-  g+=`<g data-tip="${esc(A.HLP.name)} airport"><circle cx="${MX(A.HLP.lon)}" cy="${MY(A.HLP.lat)}" r="4.5" fill="#0b0d12" stroke="var(--s2)" stroke-width="2"/><text x="${MX(A.HLP.lon)-9}" y="${MY(A.HLP.lat)+15}" text-anchor="end" font-size="10.5" font-weight="600" fill="var(--s2)">HLP</text></g>`;
-  g+=`<g data-tip="${esc(A.CGK.name)} airport"><circle cx="${MX(A.CGK.lon)}" cy="${MY(A.CGK.lat)}" r="4.5" fill="#0b0d12" stroke="var(--cgk)" stroke-width="2"/><text x="${MX(A.CGK.lon)-9}" y="${MY(A.CGK.lat)-6}" text-anchor="end" font-size="10.5" font-weight="600" fill="var(--cgk)">CGK</text></g>`;
-  g+=`<g data-tip="${esc(A.SUB.name)} airport"><circle cx="${MX(A.SUB.lon)}" cy="${MY(A.SUB.lat)}" r="4.5" fill="#0b0d12" stroke="var(--s2)" stroke-width="2"/><text x="${MX(A.SUB.lon)+9}" y="${MY(A.SUB.lat)+4}" font-size="10.5" font-weight="600" fill="var(--s2)">SUB</text></g>`;
-  return g;
+  let air=`<g data-tip="${esc(A.HLP.name)} airport"><circle cx="${MX(A.HLP.lon)}" cy="${MY(A.HLP.lat)}" r="4.5" fill="#0b0d12" stroke="var(--s2)" stroke-width="2"/><text x="${MX(A.HLP.lon)-9}" y="${MY(A.HLP.lat)+15}" text-anchor="end" font-size="10.5" font-weight="600" fill="var(--s2)">HLP</text></g>`;
+  air+=`<g data-tip="${esc(A.CGK.name)} airport"><circle cx="${MX(A.CGK.lon)}" cy="${MY(A.CGK.lat)}" r="4.5" fill="#0b0d12" stroke="var(--cgk)" stroke-width="2"/><text x="${MX(A.CGK.lon)-9}" y="${MY(A.CGK.lat)-6}" text-anchor="end" font-size="10.5" font-weight="600" fill="var(--cgk)">CGK</text></g>`;
+  air+=`<g data-tip="${esc(A.SUB.name)} airport"><circle cx="${MX(A.SUB.lon)}" cy="${MY(A.SUB.lat)}" r="4.5" fill="#0b0d12" stroke="var(--s2)" stroke-width="2"/><text x="${MX(A.SUB.lon)+9}" y="${MY(A.SUB.lat)+4}" font-size="10.5" font-weight="600" fill="var(--s2)">SUB</text></g>`;
+  return {base:g,air};
 })();
+// Route lines: the other routes thin and clickable, the chosen one on top. Cached per route.
+const MAP_LINES={};
+function mapLines(){
+  if(MAP_LINES[RT.id])return MAP_LINES[RT.id];
+  const path=(ln,a,b)=>ln.filter(p=>p[2]>=a&&p[2]<=b).map((p,i)=>(i?"L":"M")+MX(p[0]).toFixed(1)+" "+MY(p[1]).toFixed(1)).join("");
+  let g="";
+  for(const r of ROUTES){if(r===RT)continue;const d=path(r.line,r.builtKm,1e9);
+    g+=`<g data-route="${r.id}" style="cursor:pointer" data-tip="${esc(routeTitle(r)+" · via "+r.via+" · "+extKmText(r)+" · click to switch to this route")}"><path d="${d}" fill="none" stroke="#7d808c" stroke-width="1.6" stroke-dasharray="5 4" stroke-linejoin="round" opacity=".75"/><path d="${d}" fill="none" stroke="transparent" stroke-width="12"/></g>`;}
+  g+=`<path d="${path(RT.line,B_KM,1e9)}" fill="none" stroke="var(--s3)" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/><path d="${path(RT.line,0,B_KM)}" fill="none" stroke="var(--s1)" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  return MAP_LINES[RT.id]=g;
+}
 function moveTrain(raw){const t=document.getElementById("mapTrain");if(!t)return;if(raw==null){t.style.display="none";return;}const p=posAt(raw);t.setAttribute("cx",MX(p[0]));t.setAttribute("cy",MY(p[1]));t.style.display="";}
 function drawMap(m,s){
   document.getElementById("mapFacts").innerHTML=kv([
-    ["Built line",fmtNum(B_KM,1)+" km"],
-    ["Extension along toll roads",fmtNum(m.ext,0)+" km"],
+    [RT.skipsBandung?"Built line used, as far as Karawang":"Built line",fmtNum(B_KM,1)+" km"],
+    [RT.kind==="kcic"?"Extension · "+RT.name:"New line, estimated",fmtNum(m.ext,RT.kind==="kcic"?1:0)+" km"],
     ["Jakarta → Surabaya by rail",fmtNum(m.L,0)+" km","",true],
     ["HLP → SUB great circle",fmtNum(GC_KM,0)+" km"],
     ["CGK → SUB great circle",fmtNum(GC_CGK,0)+" km"],
@@ -725,29 +787,57 @@ function drawMap(m,s){
     ["Stops served",m.nStops+" of "+ST.length],
   ]);
   const above={jakarta:1,karawang:0,padalarang:1,bandung:0,cirebon:1,tegal:0,pekalongan:1,mojokerto:0,semarang:1,surakarta:0,madiun:0,surabaya:1};
-  let g=`<svg viewBox="0 0 ${MAPV.W} ${MAPV.H}" width="100%" role="img" aria-label="Map of Java with the route">`+MAP_STATIC;
-  ST.forEach((x,i)=>{const k=m.idx.indexOf(i),served=k>=0,cx=MX(x.lon),cy=MY(x.lat),up=above[x.id];
-    const tip=`${x.name} · km ${fmtNum(m.pos[i],0)} · ${served?(k?"arrives "+fmtHM(m.arr[k]/60)+" · fare from Jakarta "+fmtRp(m.fares[k].total):"departure"):"trains pass without stopping"}${x.off?" · "+x.off+" km from the city centre":""}${x.must?"":" · click to "+(served?"skip":"serve")}`;
+  let g=`<svg viewBox="0 0 ${MAPV.W} ${MAPV.H}" width="100%" role="img" aria-label="Map of Java with the route">`+MAP_STATIC.base+mapLines()+MAP_STATIC.air;
+  // labels: the served stops are placed first, each on the side that is free; a label that fits nowhere is left to the tooltip
+  const lab={};
+  { const boxes=[],order=ST.map((x,i)=>i).sort((a,b)=>(ST[b].must-ST[a].must)||((m.idx.indexOf(b)>=0)-(m.idx.indexOf(a)>=0))||a-b);
+    const free=(x0,x1,y0,y1)=>x0>=2&&x1<=MAPV.W-2&&!boxes.some(q=>x0<q[1]&&x1>q[0]&&y0<q[3]&&y1>q[2]);
+    ST.forEach(x=>{const cx=MX(x.lon),cy=MY(x.lat);boxes.push([cx-7,cx+7,cy-7,cy+7]);});
+    for(const i of order){const x=ST[i],k=m.idx.indexOf(i),cx=MX(x.lon),cy=MY(x.lat),wn=SHORT[x.id].length*(k>=0?7.6:6.9),up=above[x.id]??(i%2);
+      // candidates: above or below (preferred side first), then beside; with the arrival time if it fits, else without
+      const spots=w=>[[cx-w/2,up?cy-25:cy+11,0,up?-13:22,"middle"],[cx-w/2,up?cy+11:cy-25,0,up?22:-13,"middle"],[cx+10,cy-7,10,4.5,"start"],[cx-10-w,cy-7,-10,4.5,"end"]];
+      place:for(const [w,time] of k>0?[[wn+34,true],[wn,false]]:[[wn,false]])for(const [x0,y0,dx,dy,anchor] of spots(w))if(free(x0,x0+w,y0,y0+14)){boxes.push([x0,x0+w,y0,y0+14]);lab[x.id]={dx,dy,anchor,time};break place;}}}
+  ST.forEach((x,i)=>{const k=m.idx.indexOf(i),served=k>=0,cx=MX(x.lon),cy=MY(x.lat),L=lab[x.id];
+    const tip=`${x.name} · km ${fmtNum(m.pos[i],0)} · ${served?(k?"arrives "+fmtHM(m.arr[k]/60)+" · fare from Jakarta "+fmtRp(m.fares[k].total):"departure"):"trains pass without stopping"}${x.off?" · "+x.off+" km from the city centre":""}${x.reserve?" · reserve station in the study":x.inferred?" · inferred, not on the study's map":""}${x.must?"":" · click to "+(served?"skip":"serve")}`;
     g+=`<g data-tip="${esc(tip)}" ${x.must?"":`data-toggle="${x.id}" style="cursor:pointer"`}><circle cx="${cx}" cy="${cy}" r="13" fill="transparent"/>`+
       (served?`<circle cx="${cx}" cy="${cy}" r="6.5" fill="#fff" stroke="${x.built?"var(--s1)":"var(--s3)"}" stroke-width="3"/>`:`<circle cx="${cx}" cy="${cy}" r="4.5" fill="#0b0d12" stroke="var(--muted)" stroke-width="1.5"/>`)+
-      `<text x="${cx}" y="${cy+(up?-13:22)}" text-anchor="middle" font-size="13" font-weight="${served?650:400}" fill="${served?"var(--text)":"var(--muted)"}" stroke="#0b0d12" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round">${SHORT[x.id]}${served&&k?` <tspan font-weight="400" fill="var(--text-2)">${fmtHM(m.arr[k]/60)}</tspan>`:""}</text></g>`;});
+      (L?`<text x="${cx+L.dx}" y="${cy+L.dy}" text-anchor="${L.anchor}" font-size="13" font-weight="${served?650:400}" fill="${served?"var(--text)":"var(--muted)"}" stroke="#0b0d12" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round">${SHORT[x.id]}${L.time?` <tspan font-weight="400" fill="var(--text-2)">${fmtHM(m.arr[k]/60)}</tspan>`:""}</text>`:"")+`</g>`;});
   g+=`<circle id="mapTrain" r="7" fill="var(--s1)" stroke="#fff" stroke-width="2.5" style="display:none" pointer-events="none"/></svg>`;
   const el=document.getElementById("map");el.innerHTML=g;
   el.querySelectorAll("[data-toggle]").forEach(n=>n.addEventListener("click",()=>toggleStop(n.dataset.toggle)));
+  el.querySelectorAll("[data-route]").forEach(n=>n.addEventListener("click",()=>{hideTip();setRoute(n.dataset.route);}));
+}
+
+// ---------- the routes side by side ----------
+// Each route under the current sliders: the new line alone calling at every station (what the published times most plausibly describe), and Jakarta → Surabaya express and with the route's main stops.
+function drawRoutes(m,s){
+  const tr=m.tr;
+  const rows=ROUTES.map(r=>{const st=r.stations,B=r.builtKm,ext=r.extKm*s.alignf,L=B+ext,Z=zonesFor(r,L),pos=st.map(x=>x.km<=B?x.km:B+(x.km-B)*s.alignf);
+    const T=idx=>{let t=0;for(let k=1;k<idx.length;k++)t+=simLeg(pos[idx[k-1]],pos[idx[k]],tr,Z,false).t;return (t*(1+s.pad)+s.dwell*60*(idx.length-2))/60;};
+    const all=st.map((x,i)=>i),ib=st.reduce((a,x,i)=>x.built?i:a,0);
+    return {r,ext,newLine:T(all.filter(i=>i>=ib&&!st[i].reserve)),express:T(all.filter(i=>st[i].must)),main:T(all.filter(i=>st[i].must||r.def.includes(st[i].id))),capex:ext*s.capex*1e6};});
+  let h=`<div class="cmpwrap"><table class="cmp routes"><tr><th>Route</th><th>New line</th><th>In tunnel</th><th>Stations</th><th>Published time</th><th>Modeled, all stops</th><th>Jakarta–Surabaya, express</th><th>Main stops</th><th>Construction</th></tr>`;
+  ROUTES.forEach((r,i)=>{const q=rows[i],cur=r===RT;
+    if(!i||ROUTES[i-1].kind!==r.kind)h+=`<tr class="grp"><td colspan="9">${ROUTE_GROUP[r.kind]}</td></tr>`;
+    h+=`<tr class="${cur?"me":"pick"}" ${cur?"":`data-route="${r.id}" title="Switch to this route"`}><td>${routeTitle(r)} <small>via ${r.via}${r.skipsBandung?" · skips Bandung":""}</small></td><td>${fmtNum(q.ext,r.kind==="kcic"?1:0)} km</td><td>${r.pub?fmtNum(r.pub.tunnelKm,2)+" km":"–"}</td><td>${r.nStations}${r.nReserve?` <small>+ ${r.nReserve}</small>`:""}</td><td>${r.pub?fmtDur(r.pub.min):"–"}</td><td>${fmtDur(q.newLine)}${r.pub?` <small>${q.newLine>=r.pub.min?"+":"−"}${pct(Math.abs(q.newLine/r.pub.min-1))}</small>`:""}</td><td>${fmtDur(q.express)}</td><td>${fmtDur(q.main)}</td><td>${fmtUSD(q.capex)}</td></tr>`;});
+  h+=`</table></div><div class="legend"><span>Published: KCIC's pre-feasibility study of 2024, measured from Tegalluar. It does not say which stations the published time calls at. "Modeled, all stops" is this model's time over the new line only, from where it leaves the built one, calling at every station except the reserve ones; the percentage is its gap to the published time.</span><span>Stations are the new ones, Surabaya included; reserve stations follow the plus sign. Lengths include the alignment slider. One cost per km is applied to every route, whatever its share of tunnel.</span></div>`;
+  const el=document.getElementById("routeCmp");el.innerHTML=h;
+  el.querySelectorAll("[data-route]").forEach(n=>n.addEventListener("click",()=>setRoute(n.dataset.route)));
 }
 
 // ---------- notes ----------
-const NOTES=[
- `<b>Route.</b> The built line (Halim → Tegalluar, 142.3 km) uses the real track geometry. The extension follows the toll roads a driver takes from Bandung to Surabaya, ${fmtNum(ROUTE.extKm,0)} km: Cileunyi–Sumedang–Dawuan, a stretch of Cikopo–Palimanan, then the Trans-Java chain through Cirebon, Pekalongan, Semarang, Surakarta and Madiun to the Waru interchange. New stations sit where that corridor passes closest to each city centre, 2–11 km out. A railway designed for 350 km/h cannot follow motorway curves, so the real line would be shorter and would cost more per km in the hills east of Bandung; use the alignment slider.`,
- `<b>Running time.</b> Each run between stops is integrated in ${DS*1000} m steps. Acceleration is the smaller of the starting acceleration and what traction power leaves after resistance: a = (P/v − R(v)) ÷ (1.04·m). Braking is at a constant rate. Speed is capped at the line speed, and at the city limit within ${ZONE_KM} km of Halim, Tegalluar and the Surabaya terminus. The timetable adds a percentage margin to running time and a fixed dwell at each intermediate stop.`,
+const NOTES=()=>[
+ RT.kind==="kcic"?`<b>Route.</b> The built line (Halim → Tegalluar, 142.3 km) uses the real track geometry. The extension is alternative ${RT.alt} of KCIC's pre-feasibility study, <span class="notr">${RT.name} via ${RT.via}</span>: ${fmtNum(RT.pub.km,2)} km from Tegalluar to Surabaya, ${fmtNum(RT.pub.tunnelKm,2)} km of it in tunnel, ${RT.pub.stations} stations and ${RT.pub.reserve} in reserve, ${RT.pub.min} minutes. The study's map names the stations but is a sketch, not a surveyed alignment, so the line here is a smooth curve through them, ${fmtNum(RT.drawnKm,0)} km as drawn, with distances stretched to the published length. Each station sits where the curve passes closest to its town centre. Stations labelled in green on the map are taken to be the reserve ones; here they are optional stops like any other. The Surabaya terminus is put at Waru, on the southern edge of the city; that is an assumption, because the map places it only roughly.`
+ :`<b>Route.</b> ${RT.skipsBandung?`The built line is used from Halim as far as Karawang (${fmtNum(B_KM,1)} km, real track geometry), and Bandung is not served.`:"The built line (Halim → Tegalluar, 142.3 km) uses the real track geometry."} The new line joins corridors drawn on the map of KCIC's pre-feasibility study, which also shows the north-coast corridor of JICA's semi-high-speed study: <span class="notr">${RT.name}, via ${RT.via}</span>. This combination is not an alternative of either study. Its length of ${fmtNum(RT.extKm,0)} km is an estimate: ${fmtNum(RT.drawnKm,0)} km as drawn plus ${pct(RT.stretch-1)}, the stretch that fits KCIC's three published lengths on average. Stations on KCIC's corridors are the ones on its map; those marked inferred, on JICA's corridor, are this page's guess. ${RT.terminus==="pasarturi"?"The line ends at Pasar Turi, the terminus of the north-coast main line, in the centre of Surabaya.":"The Surabaya terminus is put at Waru, on the southern edge of the city."}${RT.jica?` JICA studied this corridor for trains of about 160 km/h: ${RT.jica.km} km from Jakarta, ${RT.jica.passenger} passenger stations, ${fmtNum(RT.jica.min/60,1)} hours.`:""}`,
+ `<b>Running time.</b> Each run between stops is integrated in ${DS*1000} m steps. Acceleration is the smaller of the starting acceleration and what traction power leaves after resistance: a = (P/v − R(v)) ÷ (1.04·m). Braking is at a constant rate. Speed is capped at the line speed, and at the city limit within ${ZONE_KM} km of Halim, of the Surabaya terminus and, on routes through Bandung, of Tegalluar. The timetable adds a percentage margin to running time and a fixed dwell at each intermediate stop.`,
  `<b>Resistance and energy.</b> R = W·(0.79 + 0.0064·V + 0.000076·V²) newtons per kilonewton of train weight, V in km/h. The quadratic term is fitted so that cruising at 350 km/h draws about 21 kWh per km at the wire, about 35 Wh per seat-km, close to the 38 Wh per passenger-km reported for the Fuxing at that speed. Energy at the wire is traction work ÷ drivetrain efficiency, minus recovered braking energy, plus auxiliaries for the whole trip. Gradients, tunnels, wind and curve resistance are ignored.`,
  `<b>Fare.</b> Today's Jakarta–Bandung fare F₀ is split into three parts: one that grows with distance^β, one that grows with travel time, and one that grows with the number of stations served. Fare = F₀ × [d·(L ÷ 142.3)^β + t·(T ÷ T₀) + s·(N ÷ 4)], where T₀ is the modeled time of today's Halim–Karawang–Padalarang–Tegalluar service. With β = 1 and no time or station share this is a plain per-km extrapolation. Stops enter through T and N. This is a cost-shaped estimate, not a forecast of what KCIC would charge; the actual fare today is set by demand and does not recover the cost of the first line.`,
  `<b>Flights.</b> Two legs into Juanda: from Halim Perdanakusuma (${fmtNum(GC_KM,0)} km great circle) and from Soekarno–Hatta (${fmtNum(GC_CGK,0)} km). Each has its own fare, block time and city-to-airport time; check-in, baggage and the Surabaya end are shared. Verdicts, the carbon payback and the charts' reference lines use the average weighted by the share of flights from each airport. The fare is an input because it varies several-fold by airline, season and booking time within the regulated band. Fuel = fixed take-off and landing fuel + cruise burn × distance flown. CO₂ = fuel × 3.16 kg/kg, times a life-cycle multiplier for fuel production, with an optional multiplier for non-CO₂ warming applied to combustion only.`,
  `<b>Traveller's verdict.</b> Generalised cost = ticket + offset surcharge + value of time × door-to-door hours. The train wins below 90 % of the flight's generalised cost and loses above 110 %. Comfort, reliability, luggage, frequency and the chance of working on board are not priced. The market-share figure is a separate rule of thumb based only on the length of the train ride.`,
- `<b>Investor's verdict.</b> Only the Bandung–Surabaya section is costed. Revenue is riders × fare × the extension's share of the route length, with riders = trains × seats × load factor, counted as end-to-end equivalents. Costs are traction electricity, a per-train-km operating cost, a per-km maintenance cost, and the construction cost turned into a level yearly payment with a capital recovery factor. Land acquisition risk, construction delay, ramp-up years, non-fare income, tax and the debt of the first line are not modeled. Ridership is an input; it is not derived from the fare or the travel time.`,
+ `<b>Investor's verdict.</b> Only the new line is costed. Revenue is riders × fare × the extension's share of the route length, with riders = trains × seats × load factor, counted as end-to-end equivalents. Costs are traction electricity, a per-train-km operating cost, a per-km maintenance cost, and the construction cost turned into a level yearly payment with a capital recovery factor. Land acquisition risk, construction delay, ramp-up years, non-fare income, tax and the debt of the first line are not modeled. Ridership is an input; it is not derived from the fare or the travel time.`,
  `<b>Planet's verdict.</b> CO₂e per passenger after offsets, train against flight, with ±15 % counted as no clear winner. The train carries the electricity it uses at the grid's intensity plus a share of the carbon emitted to build the whole line, spread over the carbon accounting period and all riders, plus the trainsets over 30 years. The flight carries a share of building the aircraft (over 40,000 flights) and the two airports. Carbon payback counts only riders who would otherwise have flown, credits the avoided fuel and aircraft but not the airports, which already exist, and charges the train its electricity and trainsets.`,
  `<b>Offsets.</b> When switched on, both modes buy credits for the chosen share of their gross emissions at one price, and the cost is added to each ticket. Only share × integrity is taken off the emissions shown, so cheap low-integrity credits change the price a little and the verdict less. Because both modes offset the same share, their ratio does not change; offsets matter here through the surcharge, which is larger for whichever mode emits more.`,
- `<b>Not modeled.</b> The choice between this northern route and a southern one through Yogyakarta, a Surabaya terminus nearer the centre, track capacity and mixed stopping patterns on one line, competition from the toll roads themselves and from conventional trains, future aircraft and fuel, and the grid getting cleaner over the asset life.`,
+ `<b>Not modeled.</b> What separates the routes besides length and stops: terrain, tunnels and viaducts (one cost per km is applied to all of them) and the population each would serve. Also a Surabaya terminus nearer the centre, track capacity and mixed stopping patterns on one line, competition from the toll roads themselves and from conventional trains, future aircraft and fuel, and the grid getting cleaner over the asset life.`,
 ];
 
 // ---------- tooltip, modal ----------
@@ -765,6 +855,7 @@ let urlTimer=null;
 function scheduleURL(){clearTimeout(urlTimer);urlTimer=setTimeout(writeURL,200);}
 function writeURL(){
   const q=new URLSearchParams();
+  if(RT.id!==ROUTE_DEF)q.set("route",RT.id);
   const cur=OPT.filter(x=>stops.has(x)),def=OPT.filter(x=>DEFAULT_STOPS.includes(x));
   if(cur.join()!==def.join())q.set("stops",cur.length?cur.join(","):"none");
   CTLS.forEach(c=>{const el=document.getElementById("in_"+c.id),raw=c.type==="toggle"?(el.checked?1:0):+el.value;if(Math.abs(raw-c.raw0)>1e-9)q.set(c.id,String(+raw.toPrecision(8)));});
@@ -773,6 +864,7 @@ function writeURL(){
 }
 function readURL(){
   const q=new URLSearchParams(location.search);let any=false;
+  if(q.has("route")&&ROUTES.some(r=>r.id===q.get("route"))&&q.get("route")!==RT.id){useRoute(q.get("route"));stops.clear();DEFAULT_STOPS.forEach(x=>stops.add(x));buildRouteUI();}
   if(q.has("stops")){stops.clear();q.get("stops").split(",").forEach(x=>{if(OPT.includes(x))stops.add(x);});any=true;}
   CTLS.forEach(c=>{if(!q.has(c.id))return;const v=parseFloat(q.get(c.id));if(!isFinite(v))return;setCtl(c,c.type==="toggle"?v:Math.max(c.min,Math.min(c.max,v)));any=true;});
   return any;
@@ -782,7 +874,6 @@ document.getElementById("copyLink").addEventListener("click",()=>{writeURL();con
 
 // ---------- boot ----------
 document.querySelectorAll("h2[data-ico]").forEach(h=>h.insertAdjacentHTML("afterbegin",ico(h.dataset.ico)));
-document.getElementById("notes").innerHTML=NOTES.map(n=>`<li>${n}</li>`).join("");
 buildControls();
 CTLS.forEach(c=>{setCtl(c,c.def);const el=document.getElementById("in_"+c.id);c.raw0=c.type==="toggle"?c.def:+el.value;}); // raw0: the default as the range input snaps it
 if(readURL())markCustom();else document.getElementById("presetNote").textContent=PRESETS[0].note;

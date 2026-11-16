@@ -19,22 +19,24 @@ const keys = await page.evaluate(async () => {
   // every reference popup
   for (const id of Object.keys(REFS)) { openRefs(id); await tick(); }
   closeRefs();
-  // presets
-  for (let i = 0; i < PRESETS.length; i++) { applyPreset(i); await tick(); tips(); }
-  // random scenarios, to reach every verdict and wording variant
   let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  for (let k = 0; k < 250; k++) {
-    CTLS.forEach(c => { const el = document.getElementById("in_" + c.id); if (c.type === "toggle") el.checked = rnd() < 0.5; else { const r = rnd(); el.value = r < 0.15 ? c.min : r > 0.85 ? c.max : +c.min + (c.max - c.min) * rnd(); } });
-    stops.clear(); OPT.forEach(o => { if (rnd() < 0.5) stops.add(o); });
-    markCustom(); update(); await tick(); if (k % 10 === 0) tips();
+  for (const route of [...ROUTES.map(r => r.id).filter(id => id !== ROUTE_DEF), ROUTE_DEF]) {
+    setRoute(route); await tick();
+    // presets
+    for (let i = 0; i < PRESETS.length; i++) { document.getElementById("preset").value = String(i); applyPreset(i); await tick(); tips(); }
+    // random scenarios, to reach every verdict and wording variant
+    for (let k = 0; k < (route === ROUTE_DEF ? 250 : 40); k++) {
+      CTLS.forEach(c => { const el = document.getElementById("in_" + c.id); if (c.type === "toggle") el.checked = rnd() < 0.5; else { const r = rnd(); el.value = r < 0.15 ? c.min : r > 0.85 ? c.max : +c.min + (c.max - c.min) * rnd(); } });
+      stops.clear(); OPT.forEach(o => { if (rnd() < 0.5) stops.add(o); });
+      markCustom(); update(); await tick(); if (k % 10 === 0) tips();
+    }
   }
   document.getElementById("copyNote").textContent = "copied"; await tick();
   document.getElementById("copyNote").textContent = "copy the address bar"; await tick();
   // speed-chart tooltip texts
-  for (const t of ROUTE.tolls) I18N.tr(t.name + " toll road");
-  ["built Whoosh line", "toll interchange"].forEach(x => I18N.tr(x));
+  I18N.tr("built Whoosh line");
   // drop texts that are only proper names (stations, city pairs), which stay as they are
-  const names=[...ST.map(x=>x.name),...Object.values(SHORT),...PEERS.map(p=>p.n),"Tegalluar","Halim","Solo","Waru","HLP","CGK","SUB","OpenStreetMap","OSRM","Natural Earth","Jakarta–Bandung","Beijing–Shanghai","Jakarta–Surabaya"].sort((a,b)=>b.length-a.length);
+  const names=[...ROUTES.flatMap(r=>[...r.stations.map(x=>x.name),...(r.kind==="kcic"?[r.name]:[]),"via "+r.via,...r.via.split(", ")]),...Object.values(SHORT),...PEERS.map(p=>p.n),"Tegalluar","Halim","Solo","Waru","HLP","CGK","SUB","OpenStreetMap","OSRM","Natural Earth","Jakarta–Bandung","Beijing–Shanghai","Jakarta–Surabaya"].sort((a,b)=>b.length-a.length);
   const bare=k=>{let t=k;for(const n of names)t=t.split(n).join("");return !/[A-Za-z]{2}/.test(t);};
   return [...I18N.missing].filter(k=>!bare(k));
 });

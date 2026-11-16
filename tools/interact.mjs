@@ -11,7 +11,7 @@ await page.goto("file://" + path.resolve("index.html"), { waitUntil: "load" });
 const time = () => page.$eval(".tile .v", e => e.innerText);
 const wait = ms => new Promise(r => setTimeout(r, ms));
 console.log("baseline", await time());
-await page.click('#map [data-toggle="pekalongan"]'); console.log("after map click on Pekalongan", await time(), await page.$eval("#stopCount", e => e.innerText));
+await page.click('#map [data-toggle="kebumen"]'); console.log("after map click on Kebumen", await time(), await page.$eval("#stopCount", e => e.innerText));
 await page.click('#stopList input[data-stop="karawang"]'); console.log("after Karawang checkbox", await time());
 await page.click("#stopsNone"); console.log("express", await time());
 await page.select("#preset", "4"); console.log("sceptic preset", await time(), "|", await page.$eval("#overall .big", e => e.innerText));
@@ -24,6 +24,17 @@ await page.click('.vcard .ref'); console.log("modal:", await page.$eval("#modal"
 await page.keyboard.press("Escape");
 await page.$eval("#in_offset", e => e.click()); console.log("offset on → CO2 tile:", await page.$$eval(".tile", t => t[4].innerText.replace(/\n/g, " | ")));
 await page.click("#resetAll"); await wait(400); console.log("reset", await time(), "url=[" + await page.evaluate(() => location.search) + "]");
+// routes: sidebar radio, a dashed line on the map, a row of the comparison table, presets, permalink, reset
+const route = () => page.evaluate(() => RT.id + " | " + document.getElementById("stopCount").innerText + " | " + [...stops].join(","));
+await page.click('#routeList input[value="ncoast"]'); console.log("radio → ncoast:", await route(), "|", await time());
+await page.$eval('#map [data-route="north"]', e => e.dispatchEvent(new MouseEvent("click", { bubbles: true }))); console.log("map line → north:", await route(), "|", await time());
+await page.click('#routeCmp tr[data-route="central"]'); console.log("table row → central:", await route(), "|", await time());
+await page.select("#preset", "2"); console.log("all stops on central:", await route(), "|", await time(), "| patterns:", await page.$eval("#patSub", e => e.innerText));
+await page.click('#map [data-toggle="kroya"]'); await wait(400); const link = await page.evaluate(() => location.search); console.log("skip Kroya, url", link);
+await page.goto("file://" + path.resolve("index.html") + link, { waitUntil: "load" }); console.log("reloaded from url:", await route(), "|", await time());
+await page.click('#routeList input[value="coast"]'); console.log("radio → coast, skipping Bandung:", await route(), "|", await time(), "| always served:", await page.$$eval("#stopList .must", l => l.length), "| fare card rows:", await page.$$eval("#cards .card", c => c[2].querySelectorAll("tr").length));
+await page.click('#routeCmp tr[data-route="south"]'); console.log("custom scenario → south:", await route());
+await page.click("#resetAll"); await wait(400); console.log("reset:", await route(), "| url=[" + await page.evaluate(() => location.search) + "]", "| checked radio:", await page.$eval("#routeList input:checked", e => e.value));
 console.log("errors:", errs.length ? errs : "none");
 await page.setViewport({ width: 420, height: 900 }); await wait(300);
 await page.screenshot({ path: "/tmp/whoosh-mobile.png", clip: { x: 0, y: 2300, width: 420, height: 1500 } });

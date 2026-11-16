@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="wiRdth=device-width, initial-scale=1">
 <title>Whoosh to Surabaya Calculator</title>
-<meta name="description" content="Interactive calculator for extending the Whoosh high-speed railway from Jakarta and Bandung to Surabaya along the Trans-Java toll roads: travel time, speed profile, fares, comparison with the HLP–SUB flight, economics and CO₂. Every number is derived live from the sliders.">
+<meta name="description" content="Interactive calculator for extending the Whoosh high-speed railway from Jakarta and Bandung to Surabaya, along the Trans-Java toll roads or one of the three alternatives in KCIC's study: travel time, speed profile, fares, comparison with the HLP–SUB flight, economics and CO₂. Every number is derived live from the sliders.">
 <meta name="author" content="Priyadi Iman Nurcahyo">
 <meta name="theme-color" content="#0e0f12">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -151,6 +151,14 @@
   .langsw{float:right;display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin:2px 0 6px 12px}
   .langsw button{background:transparent;color:var(--text-2);border:0;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer}
   .langsw button.on{background:var(--s1);color:#fff}
+  .route{display:grid;grid-template-columns:18px 1fr;gap:8px;align-items:start;padding:5px 6px;margin:0 -6px;border-radius:6px;font-size:12.5px;cursor:pointer}
+  .route:hover{background:var(--surface-2)}
+  .route.on{background:var(--surface-2)}
+  .route input{accent-color:var(--s3);width:15px;height:15px;margin:2px 0 0}
+  .route b{display:block;font-weight:600;color:var(--text)}
+  .route small{display:block;font-size:11px;color:var(--muted);line-height:1.35}
+  table.cmp.routes tr.pick{cursor:pointer}
+  table.cmp.routes tr.pick:hover td{background:var(--surface-2)}
   select.sel{width:100%;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12.5px}
 </style>
 </head>
@@ -158,7 +166,7 @@
 <header>
   <div class="langsw notr" role="group" aria-label="Language / Bahasa"><button data-lang="en" title="English">EN</button><button data-lang="id" title="Bahasa Indonesia">ID</button></div>
   <h1>Whoosh to Surabaya Calculator <button class="ref" data-ref="premise" title="What this is &amp; references">i</button></h1>
-  <p>What happens if the Jakarta–Bandung high-speed railway is extended to Surabaya along the Trans-Java toll roads: travel time, speed profile, fares, a door-to-door comparison with the flights to Juanda from both Jakarta airports (HLP–SUB and CGK–SUB), the economics of building it, and CO₂. Choose the stops, move the sliders; every number is derived live, with formulas and references inline.</p>
+  <p>What happens if the Jakarta–Bandung high-speed railway is extended to Surabaya, along the Trans-Java toll roads or one of the three alternatives in KCIC's study: travel time, speed profile, fares, a door-to-door comparison with the flights to Juanda from both Jakarta airports (HLP–SUB and CGK–SUB), the economics of building it, and CO₂. Choose the route and the stops, move the sliders; every number is derived live, with formulas and references inline.</p>
 </header>
 
 <div class="layout">
@@ -168,6 +176,10 @@
     <select id="preset" class="sel"></select>
     <div id="presetNote" style="margin-top:5px;font-size:11.5px;color:var(--muted)"></div>
     <div style="display:flex;gap:8px;align-items:center;margin-top:8px"><button class="btn" id="copyLink" title="The address bar always reflects the current inputs; copy it to share this exact scenario">Copy link to this scenario</button><button class="btn" id="resetAll">Reset</button><span id="copyNote" style="font-size:11px;color:var(--muted)"></span></div>
+  </div>
+  <div class="stops">
+    <h3><span style="font-size:13.5px;color:var(--text);font-weight:600">Route<button class="ref" data-ref="routes" title="What this is &amp; references">i</button></span><span id="routeNote"></span></h3>
+    <div id="routeList"></div>
   </div>
   <div class="stops">
     <h3><span style="font-size:13.5px;color:var(--text);font-weight:600">Stops<button class="ref" data-ref="stops" title="What this is &amp; references">i</button></span><span id="stopCount"></span></h3>
@@ -181,14 +193,15 @@
   <div class="verdicts" id="verdicts"></div>
   <div class="hero" id="hero"></div>
 
-  <div class="card" style="margin-bottom:12px"><h2 data-ico="map">Route map<button class="ref" data-ref="sec_map" title="What this is &amp; references">i</button><span>built line from OpenStreetMap · extension traced along the toll roads · click an optional station to serve or skip it</span></h2>
+  <div class="card" style="margin-bottom:12px"><h2 data-ico="map">Route map<button class="ref" data-ref="sec_map" title="What this is &amp; references">i</button><span id="mapSub"></span></h2>
     <div class="mapwrap">
       <div id="map"></div>
       <div>
         <div id="mapFacts"></div>
         <div class="legend" style="margin-top:10px;flex-direction:column;gap:5px">
           <span><i class="ln" style="background:var(--s1)"></i>built Whoosh line, 142.3 km</span>
-          <span><i class="ln" style="background:var(--s3)"></i>proposed extension along toll roads</span>
+          <span><i class="ln" style="background:var(--s3)"></i><span id="legExt"></span></span>
+          <span><i class="ln" style="background:repeating-linear-gradient(90deg,#7d808c 0 5px,transparent 5px 9px)"></i>the other routes</span>
           <span><i class="ln" style="background:var(--s2)"></i>HLP–SUB flight, great circle</span>
           <span><i class="ln" style="background:var(--cgk)"></i>CGK–SUB flight, great circle</span>
           <span><i style="background:#fff;border-radius:50%"></i>stop served</span>
@@ -198,9 +211,13 @@
     </div>
   </div>
 
+  <div class="card" style="margin-bottom:12px"><h2 data-ico="route">Routes side by side<button class="ref" data-ref="routes" title="What this is &amp; references">i</button><span>the toll-road corridor and the three alternatives of KCIC's study, under the current sliders · click a row to switch</span></h2>
+    <div id="routeCmp"></div>
+  </div>
+
   <div class="card" style="margin-bottom:12px"><h2 data-ico="chart">Speed profile<button class="ref" data-ref="sec_speed" title="What this is &amp; references">i</button><span>speed against distance from Halim · hover to read speed and elapsed time, and to follow the train on the map</span></h2>
     <div class="scrollx" id="chartSpeed"></div>
-    <div class="legend"><span><i class="ln" style="background:var(--s1)"></i>train speed</span><span><i class="ln" style="background:var(--muted)"></i>speed limit</span><span><i style="background:var(--s1);opacity:.35"></i>built line</span><span><i style="background:var(--s3);opacity:.45"></i>toll road followed by the extension</span></div>
+    <div class="legend"><span><i class="ln" style="background:var(--s1)"></i>train speed</span><span><i class="ln" style="background:var(--muted)"></i>speed limit</span><span><i style="background:var(--s1);opacity:.35"></i>built line</span><span id="legToll"><i style="background:var(--s3);opacity:.45"></i>toll road followed by the extension</span></div>
   </div>
 
   <div class="grid" id="cards"></div>
@@ -209,7 +226,7 @@
     <div class="card"><h2 data-ico="clock">Door to door<button class="ref" data-ref="sec_d2d" title="What this is &amp; references">i</button><span>minutes, city to city</span></h2><div id="chartD2D"></div></div>
     <div class="card"><h2 data-ico="economics">What the trip really costs<button class="ref" data-ref="sec_gc" title="What this is &amp; references">i</button><span>fare + offsets + value of the time spent</span></h2><div id="chartGC"></div></div>
     <div class="card"><h2 data-ico="environment">CO₂ per passenger<button class="ref" data-ref="sec_co2" title="What this is &amp; references">i</button><span>kg CO₂e, one way, before and after offsets</span></h2><div id="chartCO2"></div></div>
-    <div class="card"><h2 data-ico="chart">Every stopping pattern<button class="ref" data-ref="sec_patterns" title="What this is &amp; references">i</button><span>all 256 combinations of optional stops</span></h2><div id="chartPatterns"></div></div>
+    <div class="card"><h2 data-ico="chart">Every stopping pattern<button class="ref" data-ref="sec_patterns" title="What this is &amp; references">i</button><span id="patSub"></span></h2><div id="chartPatterns"></div></div>
     <div class="card"><h2 data-ico="chart">Travel time vs line speed<button class="ref" data-ref="sec_sens" title="What this is &amp; references">i</button><span>current stops · where rail matches the flight door to door</span></h2><div id="chartSens"></div></div>
     <div class="card"><h2 data-ico="economics">Annual cost and revenue of the extension<button class="ref" data-ref="sec_econ" title="What this is &amp; references">i</button><span>per year</span></h2><div id="chartEcon"></div></div>
   </div>
@@ -227,6 +244,7 @@
   <footer class="credit">
     <span>Built by AI. Nothing is human-verified.</span>
     <span>Route geometry © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, toll corridor routed with <a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM</a> · coastline from <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a></span>
+    <span>KCIC alternatives: schematic alignments and inferred stations.</span>
   </footer>
 </main>
 </div>

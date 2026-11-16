@@ -1,12 +1,13 @@
 # Whoosh to Surabaya Calculator
 
-Interactive calculator for extending the Whoosh high-speed railway from Jakarta and Bandung to Surabaya, assuming the track follows the existing Trans-Java toll roads.
+Interactive calculator for extending the Whoosh high-speed railway from Jakarta and Bandung to Surabaya. Seven routes can be compared: the three alternatives of KCIC's pre-feasibility study, and four other combinations of the corridors on that study's map.
 
 Open `index.html` in a browser. No build step, no external dependencies.
 
 What it computes, live from the sliders:
 
-- Travel time and speed profile for any choice of stops (Jakarta, Bandung Padalarang, Bandung Tegalluar, Surabaya always; Karawang, Cirebon, Tegal, Pekalongan, Semarang, Surakarta, Madiun, Mojokerto optional)
+- A choice of route (`?route=south|central|north|ncoast|ccentral|cnorth|coast`; Lintas Selatan when absent), with all seven compared side by side under the current sliders
+- Travel time and speed profile for any choice of stops (Jakarta, Bandung Padalarang, Bandung Tegalluar, Surabaya always; Karawang and the route's new stations optional)
 - Fare, scaled from today's Jakarta–Bandung fare by distance, travel time and stations served
 - English and Bahasa Indonesia, switched with the EN / ID buttons (`?lang=id`); translations live in `lang-id.js` and are applied by `i18n.js`, Wikipedia links stay English
 - Comparison with ten real high-speed corridors of similar length (speed, rail share against air, construction cost per km)
@@ -18,13 +19,35 @@ What it computes, live from the sliders:
 
 Every input and result has an "i" button with an explanation and references.
 
+## Routes
+
+| `route=` | Route | New line | In tunnel | Stations | Published time | New stations |
+|---|---|---|---|---|---|---|
+| `south` (default) | KCIC 1, Lintas Selatan | 629.45 km | 21.25 km | 13 + 2 reserve | 180 min | *Garut*, Tasikmalaya, Banjar, Sidareja, *Cilacap*, Kroya, Kebumen, Yogyakarta International Airport, Yogyakarta, Surakarta, Sragen, Madiun, Nganjuk, Mojokerto, Surabaya |
+| `central` | KCIC 2, Lintas Tengah | 679.19 km | 44.61 km | 15 + 1 reserve | 193 min | *Sumedang*, Kertajati, Cirebon, Babakan, Karanganyar, Purwokerto, Kroya, then as Lintas Selatan |
+| `north` | KCIC 3, Lintas Utara | 641.96 km | 51.95 km | 14 + 1 reserve | 184 min | *Sumedang*, Kertajati, Cirebon, Babakan, Tegal, Pekalongan, Lebo, Semarang, Salatiga, Surakarta, then as Lintas Selatan |
+| `ncoast` | Lintas Utara, then the north coast | about 599 km | – | 12 + 1 reserve | – | as Lintas Utara to Semarang, then (Purwodadi), (Cepu), (Bojonegoro), (Lamongan), Surabaya Pasar Turi |
+| `ccentral` | North coast, then Lintas Tengah | about 738 km | – | 15 | – | (Jatibarang), Cirebon, then as Lintas Tengah |
+| `cnorth` | North coast, then Solo | about 702 km | – | 14 | – | (Jatibarang), Cirebon, then as Lintas Utara |
+| `coast` | North coast throughout | about 660 km | – | 12 | – | (Jatibarang), Cirebon, Babakan, Tegal, Pekalongan, Lebo, Semarang, (Purwodadi), (Cepu), (Bojonegoro), (Lamongan), Surabaya Pasar Turi |
+
+*Italic*: reserve station. (Parentheses): inferred by this project. Stations are the new ones, Surabaya included.
+
+The three KCIC alternatives come from the comparison map of KCIC's pre-feasibility study (2024, still under review) that Kompas.id published in December 2024. The map gives each alternative's length from Tegalluar, tunnel length, station count and travel time, and names the stations. The same map shows the north-coast corridor of JICA's semi-high-speed study (713 km from Jakarta, 5 passenger stations, 5.5 hours). `tools/build-route.mjs` turns it into geometry:
+
+- The map is a sketch on a base map, so each corridor is redrawn as a smooth curve through hand-placed waypoints at its stations. Chainage is stretched to the published length, 4–5 % over the drawn length on all three alternatives.
+- Station names in red on the map add up to the published counts. Sumedang, Garut and Cilacap, labelled in green, are taken to be the reserve stations; that gives Lintas Selatan two where its legend says one.
+- The last four routes are the other ways of joining the mapped corridors end to end. None is an alternative of either study. Their lengths are the drawn length plus the average stretch of the three alternatives, and their stations on JICA's corridor are inferred.
+- `ccentral`, `cnorth` and `coast` leave the built line at Karawang and do not serve Bandung. That branch point is this project's assumption; JICA's own line starts in Jakarta.
+- Routes ending along the coast terminate at Pasar Turi; all others at the Waru interchange on the southern edge of Surabaya, which is this project's assumption.
+
 ## Files
 
 | File | Purpose |
 |---|---|
 | `index.html` | Markup and styles |
 | `app.js` | Model, charts, map, references |
-| `route-data.js` | Generated route geometry, stations, toll sections, coastline |
+| `route-data.js` | Generated route geometry, stations, coastline |
 | `tools/` | Scripts that fetch-process the geometry and test the page |
 | `data/` | Inputs to `tools/build-route.mjs` |
 
@@ -42,7 +65,7 @@ node tools/check-links.mjs                                        # verifies the
 ## Data sources
 
 - Built line: © OpenStreetMap contributors (ODbL)
-- Toll corridor: OSRM driving route over OpenStreetMap data, pinned to the toll roads
+- KCIC alternatives: figures and station names from the map of KCIC's 2024 pre-feasibility study as published by Kompas.id; the alignments are redrawn schematically from it
 - Coastline: Natural Earth (public domain)
 
 Built by AI. Nothing is human-verified.

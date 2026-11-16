@@ -41,3 +41,24 @@ export function project(line, p) {
   }
   return best;
 }
+
+// Centripetal Catmull–Rom curve through the waypoints, sampled about every stepKm. `lead` sets the direction of departure.
+export function spline(pts, lead, stepKm = 1) {
+  const k = Math.cos(7.2 * Math.PI / 180) * 111.32, ky = 110.57;
+  const P = pts.map(p => [p[0] * k, p[1] * ky]), n = P.length;
+  const Q = [lead ? [lead[0] * k, lead[1] * ky] : [2 * P[0][0] - P[1][0], 2 * P[0][1] - P[1][1]], ...P, [2 * P[n - 1][0] - P[n - 2][0], 2 * P[n - 1][1] - P[n - 2][1]]];
+  const out = [];
+  for (let i = 1; i < Q.length - 2; i++) {
+    const [p0, p1, p2, p3] = [Q[i - 1], Q[i], Q[i + 1], Q[i + 2]];
+    const d = (a, b) => Math.sqrt(Math.hypot(b[0] - a[0], b[1] - a[1])) || 1e-6;
+    const t0 = 0, t1 = t0 + d(p0, p1), t2 = t1 + d(p1, p2), t3 = t2 + d(p2, p3);
+    const steps = Math.max(2, Math.ceil(Math.hypot(p2[0] - p1[0], p2[1] - p1[1]) / stepKm));
+    for (let j = i === 1 ? 0 : 1; j <= steps; j++) {
+      const t = t1 + (t2 - t1) * j / steps;
+      const L = (a, b, ta, tb) => [((tb - t) * a[0] + (t - ta) * b[0]) / (tb - ta), ((tb - t) * a[1] + (t - ta) * b[1]) / (tb - ta)];
+      const A1 = L(p0, p1, t0, t1), A2 = L(p1, p2, t1, t2), A3 = L(p2, p3, t2, t3), B1 = L(A1, A2, t0, t2), B2 = L(A2, A3, t1, t3), c = L(B1, B2, t1, t2);
+      out.push([c[0] / k, c[1] / ky]);
+    }
+  }
+  return out;
+}
