@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Whoosh to Surabaya Calculator</title>
+<meta name="description" content="Interactive calculator for extending the Whoosh high-speed railway from Jakarta and Bandung to Surabaya along the Trans-Java toll roads: travel time, speed profile, fares, comparison with the HLP–SUB flight, economics and CO₂. Every number is derived live from the sliders.">
+<meta name="author" content="Priyadi Iman Nurcahyo">
+<meta name="theme-color" content="#0e0f12">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:#0e0f12; --surface:#1a1a19; --surface-2:#24242a; --border:#33343a;
+    --text:#f0efec; --text-2:#c3c2b7; --muted:#8d8c84;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767; --s9:#8d5a2b;
+    --rail:var(--s1); --air:var(--s2); --cgk:var(--s7);
+    --warn:#c98500; --bad:#e66767;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);line-height:1.45}
+  header{padding:22px 24px 10px;border-bottom:1px solid var(--border)}
+  header h1{margin:0 0 4px;font-size:22px;font-weight:650;letter-spacing:-.01em}
+  header p{margin:0;color:var(--text-2);font-size:14px;max-width:1000px}
+  .layout{display:grid;grid-template-columns:360px 1fr;gap:0;min-height:calc(100vh - 80px)}
+  @media (min-width:981px){
+    body{height:100vh;display:flex;flex-direction:column;overflow:hidden}
+    header{flex:0 0 auto}
+    .layout{flex:1 1 auto;min-height:0;height:auto}
+    aside,main{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+  }
+  @media (max-width:980px){.layout{grid-template-columns:1fr}}
+  aside{border-right:1px solid var(--border);padding:16px 18px 40px;background:#121316}
+  main{padding:18px 24px 60px;min-width:0}
+  details{border:1px solid var(--border);border-radius:8px;margin-bottom:10px;background:var(--surface)}
+  details summary{cursor:pointer;padding:9px 12px;font-weight:600;font-size:13.5px;list-style:none;display:flex;justify-content:space-between;align-items:center;user-select:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::after{content:"▸";color:var(--muted);font-size:12px;transition:transform .15s}
+  details[open] summary::after{transform:rotate(90deg)}
+  details .body{padding:4px 12px 12px}
+  .ctl{margin:8px 0 10px}
+  .ctl .row{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;gap:8px}
+  .ctl .row label{color:var(--text-2)}
+  .ctl .row output{font-variant-numeric:tabular-nums;font-weight:600;color:var(--text);white-space:nowrap}
+  .ctl input[type=range]{width:100%;margin:5px 0 0;accent-color:var(--s1);height:18px}
+  .ctl .note{font-size:11px;color:var(--muted);margin-top:2px}
+  .ctl.off{opacity:.45}
+  .switch{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-2);cursor:pointer}
+  .switch input{accent-color:var(--s3);width:16px;height:16px;margin:0}
+  .stops{border:1px solid var(--border);border-radius:8px;background:var(--surface);padding:10px 12px;margin-bottom:10px}
+  .stops h3{margin:0 0 6px;font-size:13.5px;font-weight:600;display:flex;justify-content:space-between;align-items:baseline}
+  .stops h3 span{font-size:11px;color:var(--muted);font-weight:450}
+  .stop{display:grid;grid-template-columns:18px 1fr auto;gap:8px;align-items:center;padding:3px 0;font-size:12.5px;cursor:pointer}
+  .stop input{accent-color:var(--s1);width:15px;height:15px;margin:0}
+  .stop.must{cursor:default}
+  .stop .km{color:var(--muted);font-variant-numeric:tabular-nums;font-size:11.5px}
+  .stop .tag{font-size:10px;color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:0 4px;margin-left:6px}
+  .stops .btns{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .overall{border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-bottom:12px;background:var(--surface);font-size:14px}
+  .overall .lab{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2)}
+  .overall .big{font-size:20px;font-weight:700;letter-spacing:-.01em;margin:2px 0}
+  .overall.good{border-color:#1f6b45;background:linear-gradient(135deg,#13261c,#1a1a19)}.overall.good .big{color:#5fd39a}
+  .overall.bad{border-color:#7a2b2b;background:linear-gradient(135deg,#2a1414,#1a1a19)}.overall.bad .big{color:#ff8a8a}
+  .overall.mid{border-color:#7a5a12;background:linear-gradient(135deg,#2a2210,#1a1a19)}.overall.mid .big{color:#f0c060}
+  .overall .why{font-size:12.5px;color:var(--text-2)}
+  .verdicts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-bottom:14px}
+  .vcard{display:grid;grid-template-columns:54px 1fr;gap:14px;align-items:center;border-radius:12px;padding:14px 16px;border:1px solid var(--border);background:var(--surface)}
+  .vcard.good{border-color:#1f6b45;background:linear-gradient(135deg,#13261c,#1a1a19)}
+  .vcard.bad{border-color:#7a2b2b;background:linear-gradient(135deg,#2a1414,#1a1a19)}
+  .vcard.mid{border-color:#7a5a12;background:linear-gradient(135deg,#2a2210,#1a1a19)}
+  .vcard .glyph{width:50px;height:50px;justify-self:center;color:var(--text-2)}
+  .vcard.good .glyph{color:#5fd39a}.vcard.bad .glyph{color:#ff8a8a}.vcard.mid .glyph{color:#f0c060}
+  .vcard .lab{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2)}
+  .vcard .big{font-size:20px;font-weight:700;letter-spacing:-.01em;margin:2px 0 4px}
+  .vcard.good .big{color:#5fd39a}.vcard.bad .big{color:#ff8a8a}.vcard.mid .big{color:#f0c060}
+  .vcard .why{font-size:12.5px;color:var(--text-2)}
+  .vcard .why b,.overall .why b{color:var(--text)}
+  .hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:16px}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+  .tile .k{font-size:11.5px;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em}
+  .tile .v{font-size:23px;font-weight:650;letter-spacing:-.01em;margin-top:2px;font-variant-numeric:tabular-nums}
+  .tile .v small{font-size:13px;color:var(--text-2);font-weight:500;margin-left:3px}
+  .tile .sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .mapwrap{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:14px;align-items:start}
+  @media (max-width:760px){.mapwrap{grid-template-columns:1fr}}
+  #map svg{display:block;border-radius:8px;border:1px solid var(--border)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;min-width:0}
+  .card h2{margin:0 0 8px;font-size:14px;font-weight:650}
+  .card h2 span{color:var(--muted);font-weight:450;font-size:12px;margin-left:6px}
+  table.kv{width:100%;border-collapse:collapse;font-size:13px}
+  table.kv td{padding:4px 0;border-bottom:1px solid #26272c;vertical-align:top}
+  table.kv td:first-child{color:var(--text-2);padding-right:10px}
+  table.kv td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:550;white-space:nowrap}
+  table.kv tr.total td{border-top:1px solid var(--border);font-weight:650;color:var(--text)}
+  table.kv td .f{display:block;font-size:11px;color:var(--muted);font-weight:400;font-family:ui-monospace,Menlo,Consolas,monospace;white-space:normal}
+  table.tt{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+  table.tt th{font-size:11px;color:var(--muted);font-weight:500;text-align:right;padding:3px 0 3px 8px;border-bottom:1px solid var(--border)}
+  table.tt th:first-child{text-align:left;padding-left:0}
+  table.tt td{padding:4px 0 4px 8px;border-bottom:1px solid #26272c;text-align:right;white-space:nowrap}
+  table.tt td:first-child{text-align:left;padding-left:0;color:var(--text-2)}
+  table.tt tr.skip td{color:var(--muted)}
+  table.cmp{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+  table.cmp th{font-size:11px;font-weight:600;text-align:right;padding:3px 0 5px 10px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.04em}
+  table.cmp th:first-child{text-align:left}
+  table.cmp th.r{color:var(--rail)} table.cmp th.a{color:var(--air)} table.cmp th.a2{color:var(--cgk)} table.cmp th.a3{color:var(--text-2)}
+  .cmpwrap{overflow-x:auto}
+  table.cmp tr.me td{color:var(--rail);font-weight:650} table.cmp td a{color:inherit} table.cmp td small{color:var(--muted);font-weight:400}
+  table.cmp td{padding:4px 0 4px 10px;border-bottom:1px solid #26272c;text-align:right;white-space:nowrap;font-weight:550;vertical-align:top}
+  table.cmp td:first-child{text-align:left;padding-left:0;color:var(--text-2);font-weight:400;white-space:normal}
+  table.cmp td .f{display:block;font-size:11px;color:var(--muted);font-weight:400;font-family:ui-monospace,Menlo,Consolas,monospace}
+  table.cmp tr.total td{border-top:1px solid var(--border);font-weight:650;color:var(--text)}
+  .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:12px;margin-top:12px}
+  @media (max-width:520px){.charts{grid-template-columns:1fr}.grid{grid-template-columns:1fr}}
+  .scrollx{overflow-x:auto}
+  #chartSpeed svg{min-width:760px;display:block}
+  svg text{font-family:inherit}
+  .tip{position:fixed;pointer-events:none;background:#2b2c33;border:1px solid var(--border);border-radius:6px;padding:6px 9px;font-size:12px;color:var(--text);display:none;z-index:1000;max-width:320px;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+  .flag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:4px;margin-left:6px;vertical-align:middle;border:1px solid}
+  .flag.warn{color:var(--warn);border-color:var(--warn)}
+  .flag.bad{color:var(--bad);border-color:var(--bad)}
+  .flag.ok{color:#5fd39a;border-color:#1f6b45}
+  .notes{font-size:12.5px;color:var(--text-2);margin:0;padding-left:18px}
+  .notes li{margin-bottom:6px}
+  .notes b{color:var(--text)}
+  .btn{background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer}
+  .btn:hover{border-color:var(--text-2)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text-2);margin:4px 0 2px}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+  .legend i.ln{height:3px;width:16px;vertical-align:3px}
+  .credit{margin-top:28px;padding-top:14px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;font-size:12.5px;color:var(--muted)}
+  .credit a{color:var(--text-2)}
+  .ref{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1px solid var(--muted);background:transparent;color:var(--text-2);font:italic 600 10px/1 Georgia,serif;margin-left:6px;cursor:pointer;vertical-align:1px;padding:0;text-transform:none}
+  .ref:hover{border-color:var(--s1);color:var(--s1)}
+  header h1 .ref{width:18px;height:18px;font-size:12px}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:2000;padding:20px}
+  .mbox{background:var(--surface);border:1px solid var(--border);border-radius:12px;max-width:580px;width:100%;max-height:80vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  .mhead{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);font-weight:650;font-size:14px}
+  .mdesc{margin:0;padding:12px 16px 4px;font-size:13px;line-height:1.5;color:var(--text-2)}
+  .mlabel{padding:10px 16px 0;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .mbox ul{list-style:none;margin:0;padding:8px 16px}
+  .mbox li{padding:8px 0;border-bottom:1px solid #26272c}
+  .mbox li:last-child{border-bottom:0}
+  .mbox a{color:var(--s1);text-decoration:none;font-size:13.5px}
+  .mbox a:hover{text-decoration:underline}
+  .mbox .u{font-size:11px;color:var(--muted);font-family:ui-monospace,Menlo,Consolas,monospace;margin-top:2px;word-break:break-all}
+  .mfoot{padding:10px 16px;font-size:11.5px;color:var(--muted);border-top:1px solid var(--border)}
+  .ico{width:20px;height:20px;vertical-align:-4px;margin-right:8px;color:var(--s1);flex:0 0 auto}
+  details summary .ico{color:var(--text-2)}
+  .langsw{float:right;display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin:2px 0 6px 12px}
+  .langsw button{background:transparent;color:var(--text-2);border:0;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer}
+  .langsw button.on{background:var(--s1);color:#fff}
+  select.sel{width:100%;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12.5px}
+</style>
+</head>
+<body>
+<header>
+  <div class="langsw notr" role="group" aria-label="Language / Bahasa"><button data-lang="en" title="English">EN</button><button data-lang="id" title="Bahasa Indonesia">ID</button></div>
+  <h1>Whoosh to Surabaya Calculator <button class="ref" data-ref="premise" title="What this is &amp; references">i</button></h1>
+  <p>What happens if the Jakarta–Bandung high-speed railway is extended to Surabaya along the Trans-Java toll roads: travel time, speed profile, fares, a door-to-door comparison with the flights to Juanda from both Jakarta airports (HLP–SUB and CGK–SUB), the economics of building it, and CO₂. Choose the stops, move the sliders; every number is derived live, with formulas and references inline.</p>
+</header>
+
+<div class="layout">
+<aside id="controls">
+  <div style="margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><strong style="font-size:13px">Inputs</strong><span style="font-size:11px;color:var(--muted)">scenario presets</span></div>
+    <select id="preset" class="sel"></select>
+    <div id="presetNote" style="margin-top:5px;font-size:11.5px;color:var(--muted)"></div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:8px"><button class="btn" id="copyLink" title="The address bar always reflects the current inputs; copy it to share this exact scenario">Copy link to this scenario</button><button class="btn" id="resetAll">Reset</button><span id="copyNote" style="font-size:11px;color:var(--muted)"></span></div>
+  </div>
+  <div class="stops">
+    <h3><span style="font-size:13.5px;color:var(--text);font-weight:600">Stops<button class="ref" data-ref="stops" title="What this is &amp; references">i</button></span><span id="stopCount"></span></h3>
+    <div id="stopList"></div>
+    <div class="btns"><button class="btn" id="stopsNone">Express (no optional stops)</button><button class="btn" id="stopsAll">All stops</button></div>
+  </div>
+</aside>
+
+<main>
+  <div class="overall" id="overall"></div>
+  <div class="verdicts" id="verdicts"></div>
+  <div class="hero" id="hero"></div>
+
+  <div class="card" style="margin-bottom:12px"><h2 data-ico="map">Route map<button class="ref" data-ref="sec_map" title="What this is &amp; references">i</button><span>built line from OpenStreetMap · extension traced along the toll roads · click an optional station to serve or skip it</span></h2>
+    <div class="mapwrap">
+      <div id="map"></div>
+      <div>
+        <div id="mapFacts"></div>
+        <div class="legend" style="margin-top:10px;flex-direction:column;gap:5px">
+          <span><i class="ln" style="background:var(--s1)"></i>built Whoosh line, 142.3 km</span>
+          <span><i class="ln" style="background:var(--s3)"></i>proposed extension along toll roads</span>
+          <span><i class="ln" style="background:var(--s2)"></i>HLP–SUB flight, great circle</span>
+          <span><i class="ln" style="background:var(--cgk)"></i>CGK–SUB flight, great circle</span>
+          <span><i style="background:#fff;border-radius:50%"></i>stop served</span>
+          <span><i style="background:transparent;border:1.5px solid var(--muted);border-radius:50%"></i>station passed without stopping</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:12px"><h2 data-ico="chart">Speed profile<button class="ref" data-ref="sec_speed" title="What this is &amp; references">i</button><span>speed against distance from Halim · hover to read speed and elapsed time, and to follow the train on the map</span></h2>
+    <div class="scrollx" id="chartSpeed"></div>
+    <div class="legend"><span><i class="ln" style="background:var(--s1)"></i>train speed</span><span><i class="ln" style="background:var(--muted)"></i>speed limit</span><span><i style="background:var(--s1);opacity:.35"></i>built line</span><span><i style="background:var(--s3);opacity:.45"></i>toll road followed by the extension</span></div>
+  </div>
+
+  <div class="grid" id="cards"></div>
+
+  <div class="charts">
+    <div class="card"><h2 data-ico="clock">Door to door<button class="ref" data-ref="sec_d2d" title="What this is &amp; references">i</button><span>minutes, city to city</span></h2><div id="chartD2D"></div></div>
+    <div class="card"><h2 data-ico="economics">What the trip really costs<button class="ref" data-ref="sec_gc" title="What this is &amp; references">i</button><span>fare + offsets + value of the time spent</span></h2><div id="chartGC"></div></div>
+    <div class="card"><h2 data-ico="environment">CO₂ per passenger<button class="ref" data-ref="sec_co2" title="What this is &amp; references">i</button><span>kg CO₂e, one way, before and after offsets</span></h2><div id="chartCO2"></div></div>
+    <div class="card"><h2 data-ico="chart">Every stopping pattern<button class="ref" data-ref="sec_patterns" title="What this is &amp; references">i</button><span>all 256 combinations of optional stops</span></h2><div id="chartPatterns"></div></div>
+    <div class="card"><h2 data-ico="chart">Travel time vs line speed<button class="ref" data-ref="sec_sens" title="What this is &amp; references">i</button><span>current stops · where rail matches the flight door to door</span></h2><div id="chartSens"></div></div>
+    <div class="card"><h2 data-ico="economics">Annual cost and revenue of the extension<button class="ref" data-ref="sec_econ" title="What this is &amp; references">i</button><span>per year</span></h2><div id="chartEcon"></div></div>
+  </div>
+
+  <div class="card" style="margin-top:12px"><h2 data-ico="train">Comparable high-speed lines<button class="ref" data-ref="sec_peers" title="What this is &amp; references">i</button><span>city pairs 600–1,300 km apart in Spain, Germany, Italy, France, Japan and China · fastest scheduled train</span></h2><div id="peers"></div></div>
+  <div class="charts" style="margin-top:12px">
+    <div class="card"><h2 data-ico="chart">Train time and the split with air<button class="ref" data-ref="r_share" title="What this is &amp; references">i</button><span>rail's share of rail + air passengers on real corridors, against the curve this model uses</span></h2><div id="chartShare"></div></div>
+    <div class="card"><h2 data-ico="economics">Construction cost per km<button class="ref" data-ref="sec_peercost" title="What this is &amp; references">i</button><span>US$ million per route-km, as reported, not adjusted for inflation</span></h2><div id="chartCapex"></div></div>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <h2 data-ico="notes">Model notes &amp; what is not modeled</h2>
+    <ul class="notes" id="notes"></ul>
+  </div>
+  <footer class="credit">
+    <span>Built by AI. Nothing is human-verified.</span>
+    <span>Route geometry © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, toll corridor routed with <a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM</a> · coastline from <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a></span>
+  </footer>
+</main>
+</div>
+<div class="tip" id="tip"></div>
+<div id="modal" class="modal">
+  <div class="mbox" role="dialog" aria-modal="true">
+    <div class="mhead"><span id="mtitle"></span><button class="btn" id="mclose">✕</button></div>
+    <p id="mdesc" class="mdesc"></p>
+    <div class="mlabel">References</div>
+    <ul id="mlist"></ul>
+    <div class="mfoot">Links open in a new tab. Wikipedia entries are starting points; the slider notes give the specific values assumed.</div>
+  </div>
+</div>
+<script src="route-data.js"></script>
+<script src="lang-id.js"></script>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
