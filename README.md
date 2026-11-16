@@ -21,6 +21,7 @@ What it computes, live from the sliders:
 - CO₂ per passenger for both modes, with optional carbon offsets
 - The least solar panel area whose yearly output equals the trains' yearly electricity, at a configurable solar yield
 - Four verdicts: traveller, investor, planet and capacity
+- On narrow screens, where the results sit below the inputs, a bar at the bottom keeps the travel time, fare and door-to-door time in view and jumps to the results when tapped
 
 Every input and result has an "i" button with an explanation and references.
 
@@ -53,6 +54,7 @@ The three KCIC alternatives come from the comparison map of KCIC's pre-feasibili
 | `index.html` | Markup and styles |
 | `app.js` | Model, charts, map, references |
 | `route-data.js` | Generated route geometry, stations, coastline |
+| `whoosh-logo.svg` | Whoosh wordmark shown in the page header |
 | `tools/` | Scripts that fetch-process the geometry and test the page |
 | `data/` | Inputs to `tools/build-route.mjs` |
 
@@ -73,5 +75,6 @@ node tools/check-links.mjs                                        # verifies the
 - KCIC alternatives: figures and station names from the map of KCIC's 2024 pre-feasibility study as published by Kompas.id; the alignments are redrawn schematically from it
 - Coastline: Natural Earth (public domain)
 - Elevation: SRTM 30 m through the OpenTopoData public API, cached in `data/elevation.json`
+- Whoosh wordmark: `WHOOSH Logo.svg` from Wikimedia Commons, public domain there as a text logo. It is a trademark of KCIC; this project is independent and not affiliated with KCIC
 
 Built by AI. Nothing is human-verified.

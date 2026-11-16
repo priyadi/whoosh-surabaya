@@ -566,6 +566,11 @@ function update(){
     tile("Extension to build"+refBtn("capex"),usd(m.capex),"",`${fmtNum(m.ext,0)} km · ${fmtRp(m.capex)} · ${fmtNum(m.capex/fx/7.3e9,1)}× the first line`)+
     tile("Cost covered by fares"+refBtn("sec_econ"),pct(m.cover),"",`operations ${pct(m.opRatio)} covered · ${fmtNum(m.ridersYr/1e6,1)} M passengers/yr`+(m.cover<0.5?flag("deep subsidy","bad"):m.cover<1?flag("subsidy","warn"):""));
 
+  // results bar on narrow screens, where the results sit below all the inputs
+  document.getElementById("peekTime").textContent=fmtDur(m.Tmin);
+  document.getElementById("peekFare").textContent=fmtRp(m.fare.total);
+  document.getElementById("peekD2D").textContent=fmtDur(m.d2dRail.total);
+
   // cards
   let tt=`<table class="tt"><tr><th>Station</th><th>km</th><th>arrives</th><th>fare from Jakarta</th></tr>`;
   ST.forEach((x,i)=>{const k=m.idx.indexOf(i);tt+=k<0?`<tr class="skip"><td>${x.name}</td><td>${fmtNum(m.pos[i],0)}</td><td>passes</td><td>–</td></tr>`
@@ -1078,5 +1083,12 @@ document.querySelectorAll("h2[data-ico]").forEach(h=>h.insertAdjacentHTML("after
 buildControls();
 CTLS.forEach(c=>{setCtl(c,c.def);const el=document.getElementById("in_"+c.id);c.raw0=c.type==="toggle"?c.def:+el.value;}); // raw0: the default as the range input snaps it
 if(readURL())markCustom();else document.getElementById("presetNote").textContent=PRESETS[0].note;
+{ // the results bar shows while the inputs are on screen and the results are still below
+  const peek=document.getElementById("peek"),top=document.getElementById("verdicts");
+  const place=()=>peek.classList.toggle("away",top.getBoundingClientRect().top<innerHeight-60);
+  addEventListener("scroll",place,{passive:true});addEventListener("resize",place);
+  peek.addEventListener("click",()=>top.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth",block:"start"}));
+  requestAnimationFrame(place);
+}
 update();
 I18N.start();
