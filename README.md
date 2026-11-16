@@ -11,6 +11,7 @@ What it computes, live from the sliders:
 - Fare, scaled from today's Jakarta–Bandung fare by distance, travel time and stations served
 - English and Bahasa Indonesia, switched with the EN / ID buttons (`?lang=id`); translations live in `lang-id.js` and are applied by `i18n.js`, Wikipedia links stay English
 - Comparison with ten real high-speed corridors of similar length (speed, rail share against air, construction cost per km)
+- Average distance between stations on twelve other lines, against the chosen route and the study's own station count
 - Elevation profile under the speed chart: the ground along each line and a rail level derived from it, with gravity on that level included in running time and energy (switchable)
 - CO₂ includes building the line, the trainsets, the aircraft and the airports, each on its own slider
 - Door-to-door time and cost against the flights from both Jakarta airports (HLP–SUB and CGK–SUB), each with its own configurable fare, block time and city-to-airport time, plus a slider for the share of flights leaving from CGK
