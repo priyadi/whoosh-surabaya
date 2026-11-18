@@ -57,6 +57,10 @@ const N_JCM=LK("JCM / GEC — grid emission factors for Indonesia","https://gec.
 const N_HEADWAY=LK("Railway Sciences — train arrival headway on high-speed railways, with the traffic of the Beijing–Shanghai line","https://emerald.com/insight/content/doi/10.1108/RS-03-2024-0007");
 const WHOOSH=LK("Wikipedia — High-speed rail in Indonesia (Whoosh)",W_+"High-speed_rail_in_Indonesia");
 const HSR=LK("Wikipedia — High-speed rail",W_+"High-speed_rail");
+const N_JICA=LK("JICA — Jakarta–Bandung high-speed railway feasibility study, executive summary, 2015 (demand forecasts and GRDP sensitivity)","https://openjicareport.jica.go.jp/pdf/12235396.pdf");
+const N_WH25=LK("Republika — KCIC: Whoosh carried 6.2 million passengers in 2025","https://ekonomi.republika.co.id/berita/t8qjcx423/kcic-whoosh-angkut-62-juta-penumpang-pada-2025-naik-200-ribu-dari-2024");
+const N_HUBUD=LK("Ditjen Hubud — domestic route traffic, December 2025 (CGK–SUB 2,869,581, HLP–SUB 901,239 passengers)","https://hubud.kemenhub.go.id/hubud/website/assets/file/publikasidjpu/f5a0cec53caf76a8cfa83bc98ad1f428.pdf");
+const N_GRAV=LK("Wikipedia — Gravity model of trade (the same form is used for travel)",W_+"Gravity_model_of_trade");
 const REFS={
  premise:{t:"Extending Whoosh to Surabaya",d:"Whoosh is the 142.3 km, 350 km/h line between Jakarta (Halim) and Bandung (Tegalluar) that opened in October 2023. Extending it to Surabaya has been discussed by successive governments; as of 2026 it is still under study, and officials have tied it to resolving the debt of the first line. No route has been fixed. This page models the three alternatives of KCIC's pre-feasibility study and the other combinations of the corridors on its map.",l:[WHOOSH,LK("Wikipedia — Rail transport in Indonesia",W_+"Rail_transport_in_Indonesia"),LK("Wikipedia — Kereta Cepat Indonesia China",W_+"Kereta_Cepat_Indonesia_China"),N_TEMPO,N_SCMP,LK("Tempo — national high-speed rail committee to address Whoosh issues","https://en.tempo.co/read/2081787/indonesia-to-form-high-speed-rail-committee-to-address-whoosh-issues"),LK("Seasia — Whoosh marks two years, prepares for next phase to Surabaya","https://seasia.co/2025/10/22/indonesias-whoosh-marks-two-years-prepares-for-next-phase-to-surabaya"),LK("Katadata — Jakarta–Surabaya high-speed train plan is on again (2023)","https://dinsights.katadata.co.id/read/2023/10/03/jakarta-surabaya-high-speed-train-plan-is-on-again"),LK("Wikipedia — Jakarta–Surabaya line (the conventional railway)",W_+"Jakarta%E2%80%93Surabaya_line")]},
  routes:{t:"Route alternatives",d:"Seven ways to draw the line to Surabaya. Three are the alternatives of KCIC's pre-feasibility study of 2024, still under review, taken from the comparison map that Kompas.id published in December 2024. Each is measured from Tegalluar: Lintas Selatan via Kroya and Yogyakarta (629.45 km, 21.25 km of it in tunnel, 13 stations and 1 in reserve, 180 minutes), Lintas Tengah via Cirebon and Purwokerto (679.19 km, 44.61 km in tunnel, 15 stations and 1 in reserve, 193 minutes) and Lintas Utara via Cirebon and Semarang (641.96 km, 51.95 km in tunnel, 14 stations and 1 in reserve, 184 minutes). KCIC's consultant recommended the southern one. All three share the line from Solo to Surabaya, and the southern and central ones share Kroya to Solo. The map names the stations. Names in red add up to the published counts; Sumedang, Garut and Cilacap, in green, are taken to be the reserve stations, which gives the southern line two where its legend says one. The map is a sketch on a base map, so each line is redrawn here as a smooth curve through its stations, and distances are stretched by 4–5 % to the published length. The same map shows the north-coast corridor of JICA's semi-high-speed study: 713 km from Jakarta, 5 passenger stations, 5.5 hours. The last four options are the other ways of joining these corridors end to end: Lintas Utara as far as Semarang and then the coast, and three that leave the built line at Karawang, skip Bandung and follow the coast to Cirebon, continuing along Lintas Tengah, along Lintas Utara through Solo, or along the coast throughout. None of the four is an alternative of either study, and that the coastal line would branch off at Karawang is this page's assumption. Their lengths are estimates and their stations on JICA's corridor are inferred. Routes that reach Surabaya along the coast end at Pasar Turi, the others at Waru.",l:[LK("Kontan — three alternative alignments for the Whoosh extension (2025)","https://industri.kontan.co.id/news/bandung-surabaya-cuma-3-jam-ini-tiga-alternatif-jalur-perpanjangan-whoosh"),LK("Kompas — KCIC on the Surabaya extension (February 2025)","https://money.kompas.com/read/2025/02/14/142626826/apa-kabar-proyek-perpanjangan-whoosh-ke-surabaya-ini-kata-kcic?page=all"),LK("CNBC Indonesia — planned Jakarta–Surabaya route, phasing and KCIC's recommendation (July 2025)","https://www.cnbcindonesia.com/news/20250729162059-4-653281/rencana-rute-kereta-cepat-jakarta-surabaya-era-jokowi-lewat-sini"),LK("Okezone — three route options named by the transport minister (October 2024)","https://economy.okezone.com/read/2024/10/06/320/3071420/3-opsi-jalur-kereta-cepat-jakarta-surabaya"),LK("Kompas.id — the strategic plan for the Jakarta–Surabaya high-speed railway, with the comparison map (subscription)","https://www.kompas.id/artikel/keberlanjutan-kereta-cepat-infrastruktur-untuk-siapa"),LK("Wikipedia — Kereta Cepat Indonesia China",W_+"Kereta_Cepat_Indonesia_China")]},
@@ -93,7 +97,15 @@ const REFS={
  vot:{t:"Value of travel time",d:"What an hour of the traveller's time is worth. It converts the time difference into money so that time and price can be compared in one number, the generalised cost.",l:[LK("Wikipedia — Value of time",W_+"Value_of_time"),LK("Wikipedia — Generalised cost",W_+"Generalised_cost"),LK("Wikipedia — Economy of Indonesia",W_+"Economy_of_Indonesia")]},
  capex:{t:"Construction cost per km",d:"All-in cost of the new line per route-km, including stations and systems. The first Whoosh line cost about US$7.3 billion for 142.3 km, or US$51 million per km, with long tunnels and viaducts. Chinese domestic lines have cost roughly US$17–21 million per km.",l:[WHOOSH,LK("Wikipedia — Kereta Cepat Indonesia China",W_+"Kereta_Cepat_Indonesia_China"),LK("Wikipedia — High-speed rail in China",W_+"High-speed_rail_in_China"),N_SCMP]},
  trains:{t:"Trains per day",d:"Departures per direction per day. Whoosh has run between 40 and 62 trips a day in total, or 20–31 each way. The slider ends at the line's ceiling: the departures that the shortest headway allows in a service day with the chosen stops, as in the capacity card. When the ceiling falls below the trains set, the trains follow it down.",l:[WHOOSH,LK("Wikipedia — Headway",W_+"Headway")]},
- lf:{t:"Train load factor",d:"Share of seat-kilometres sold over the whole line. Whoosh carries about 6 million passengers a year.",l:[LK("Wikipedia — Passenger load factor",W_+"Passenger_load_factor"),WHOOSH]},
+ sec_demand:{t:"Passenger demand",d:"An estimate of the trips the extension would carry, built in two steps. Jakarta–Surabaya comes from travel that already exists: the flight passengers (from the flights sliders; 3.77 million flew CGK–SUB and HLP–SUB in 2025) times the rail share the ride time gives, plus the share of conventional-train and bus and car travellers who would switch, plus induced trips. Every other pair of served stations is scaled from it by a gravity model: trips between two places grow with the product of their economic masses and fall with distance, trips ∝ mass_i × mass_j ÷ distance^γ, where mass = population × (GDP per person ÷ the national figure)^ε. Each station draws on the regencies and cities around it (BPS population and GRDP per person, 2024); an area whose station is passed takes the next station on its list, if any. The distance exponent γ is by default fitted so that the same formula, scaled from Jakarta–Surabaya back to Jakarta–Bandung, gives the 6.2 million passengers Whoosh carried in 2025: two Indonesian city pairs, at 142 and about 770 km, bracket almost every pair on the line. Pairs closer than 100 km are left out (local trains, buses and toll roads serve them more cheaply), and so are trips that stay on the built Jakarta–Bandung line, which today's Whoosh trains carry. The result is reported as trips, passenger-km and the load factor it fills; the rest of the calculator keeps using the load-factor slider until it is set from here. Limits: one rail share for every pair, taken from the Jakarta–Surabaya ride; the fare does not change demand; GRDP per person overstates income where industry or oil sits (Kota Surabaya, Gresik, Cilacap, Bojonegoro); the conventional-rail and road markets are unpublished and set by hand.",l:[N_HUBUD,N_WH25,N_JICA,N_GRAV,LK("Wardman 2006 — Demand for rail travel and the effects of external factors (income elasticities)","https://eprints.whiterose.ac.uk/3394/2/Demand_for_rail_travel_secure.pdf"),LK("Givoni & Dobruszkes 2013 — A review of ex-post evidence for mode substitution and induced demand following high-speed rail","https://ideas.repec.org/a/taf/transr/v33y2013i6p720-742.html")]},
+ mrail:{t:"Conventional-train market",d:"End-to-end Jakarta–Surabaya passengers on KAI's trains, both directions. KAI does not publish passengers by city pair. The northern and southern lines carry about 13 named services between the two cities, from the Argo Bromo Anggrek to economy trains; KAI's Surabaya region (Daop 8) carried 6.06 million passengers to all destinations in 2025. 1.5 million a year is an estimate: about 14 trains a day each way of 500–600 seats, mostly full, with a third of the riders going end to end. The switching share is low because most of these fares are far below a high-speed ticket.",l:[LK("Bisnis — KAI Daop 8 carried 6.06 million passengers in 2025","https://ekonomi.bisnis.com/read/20260113/98/1943953/kai-daop-8-catat-605-juta-penumpang-kereta-api-sepanjang-2025"),LK("Wikipedia (Indonesian) — Surabaya Pasar Turi station, services","https://id.wikipedia.org/wiki/Stasiun_Surabaya_Pasar_Turi"),LK("Wikipedia (Indonesian) — Surabaya Gubeng station, services","https://id.wikipedia.org/wiki/Stasiun_Surabaya_Gubeng")]},
+ mroad:{t:"Bus and car market",d:"Jakarta–Surabaya trips by intercity bus and private car, both directions. No published count was found: the national origin–destination survey is not online. The trip is about ten hours on the Trans-Java toll road. 1.5 million a year is an estimate, and only a small share would switch: by car the cost is shared among the passengers and the car is there at the other end. JICA's 2015 study expected most of its Jakarta–Bandung riders to come from cars, a short trip where the car's door-to-door advantage matters less.",l:[N_JICA,LK("Wikipedia — Trans-Java toll road",W_+"Trans-Java_toll_road")]},
+ induced:{t:"Induced trips",d:"Trips that nobody made before, because the new train made them quick or cheap enough: visits, business trips, commuting between cities. The share is the induced trips' part of all riders, not an addition to the diverted ones; riders = diverted ÷ (1 − share). Reviews of ex-post studies find 10–20 % a few years after a line opens; single-line figures above that are often quoted for the first French and Spanish lines.",l:[LK("Givoni & Dobruszkes 2013 — A review of ex-post evidence for mode substitution and induced demand following high-speed rail","https://ideas.repec.org/a/taf/transr/v33y2013i6p720-742.html"),LK("Wikipedia — Induced demand",W_+"Induced_demand")]},
+ eps:{t:"Income elasticity of travel",d:"How much more travel a place generates per person when its income is higher: 1.2 means 10 % more income gives 12 % more trips. Here it weights each area's population by its GRDP per person, relative to Indonesia's. JICA's 2015 feasibility study moved its demand 12–14 % for a 10 % change in Java's GRDP, an elasticity of about 1.2–1.4; British studies of rail find 1.2–1.8 at similar distances, and long trips are more elastic than short ones. GRDP per person measures production where it happens, so it overstates the income of places with heavy industry or oil.",l:[N_JICA,LK("Wardman 2006 — Demand for rail travel and the effects of external factors","https://eprints.whiterose.ac.uk/3394/2/Demand_for_rail_travel_secure.pdf"),LK("Dargay & Clark 2012 — The determinants of long distance travel in Great Britain","https://ideas.repec.org/a/eee/transa/v46y2012i3p576-587.html")]},
+ gfit:{t:"Fitting the distance decay to Whoosh",d:"With the fit on, the exponent γ is chosen so that the Jakarta–Surabaya estimate, scaled to Jakarta–Bandung by the gravity formula, equals the 6.2 million passengers Whoosh carried in 2025. The other pairs, almost all between 142 and 770 km, are then interpolated between two Indonesian observations rather than borrowed from other countries. A low fitted value means Jakarta–Surabaya is estimated high relative to what Whoosh carries, or Whoosh low relative to the size of Bandung; the fit is clipped to 0–3.",l:[N_WH25,N_GRAV]},
+ gamma:{t:"Distance decay",d:"In a gravity model, trips between two places fall with distance as 1 ÷ distance^γ. Studies of intercity rail find exponents of about 1 to 2, higher for regional and conventional rail; high-speed rail, which competes with flying over long distances, decays more slowly over its best range of a few hundred kilometres. With the fit to Whoosh on, this slider is not used.",l:[N_GRAV,LK("Wang & Chen 2022 — gravity models of intercity travel in Beijing–Tianjin–Hebei (rail exponent about 1.9)","https://arxiv.org/pdf/2201.04013"),LK("Pedestrian Observations — high-speed rail ridership estimator (population^0.8 ÷ distance²)","https://pedestrianobservations.com/2025/08/31/high-speed-rail-ridership-estimator-applet/")]},
+ r_forecasts:{t:"Published forecasts",d:"JICA's 2015 feasibility study forecast 161,000 passengers a day in 2030 and 323,000 in 2050 for a high-speed line all the way to Surabaya, at an assumed fare of Rp 800,000; its Jakarta–Bandung-only case forecast 44,000 a day, about 2.5 times what Whoosh carries. Kemenhub's railway directorate quoted 63,000 a day in 2025, without a year or basis. A stated-preference study from ITB (2019) found 5,085 a day in 2025 and 12,597 in 2050 in its moderate scenario (5,376 to 33,421 across its scenarios). KCIC's 2024 pre-feasibility study has published no ridership. The figures cover different things: some include the Jakarta–Bandung section's own riders, which this estimate leaves to today's trains (about 17,000 a day).",l:[N_JICA,LK("CNBC Indonesia — Kemenhub: 63,000 passengers a day expected on a Jakarta–Surabaya line","https://www.cnbcindonesia.com/news/20250729162059-4-653281/rencana-rute-kereta-cepat-jakarta-surabaya-era-jokowi-lewat-sini"),LK("Lubis et al. 2019 — demand for Jakarta–Surabaya high-speed rail, International Journal of Technology","https://ijtech.eng.ui.ac.id/article/view/2442"),N_WH25]},
+ lf:{t:"Train load factor",d:"Share of seat-kilometres sold over the whole line. Whoosh carried 6.2 million passengers in 2025. The demand card estimates the load factor the line's trips would fill, and its button sets this slider to it.",l:[LK("Wikipedia — Passenger load factor",W_+"Passenger_load_factor"),WHOOSH]},
  headway:{t:"Shortest headway between trains",d:"The closest two trains can follow each other at line speed. The train behind needs its whole braking distance clear ahead of it, plus margins, and the approaches to stations take longer to clear than open track. CTCS-3, the signalling of China's 350 km/h lines, is designed for 3 minutes. Timetables there are mostly drawn at 5 minutes, and at 4 on some sections. This slider sets the ceiling in the capacity card, which is also where the trains slider above it ends.",l:[LK("Wikipedia — Headway",W_+"Headway"),LK("Wikipedia — Chinese Train Control System",W_+"Chinese_Train_Control_System"),LK("Wikipedia — Beijing–Shanghai high-speed railway",W_+"Beijing–Shanghai_high-speed_railway"),N_HEADWAY]},
  flights:{t:"Flights per day",d:"Scheduled Jakarta–Surabaya departures per direction, from Halim and Soekarno–Hatta together. Schedules list roughly 28–31 a day from Soekarno–Hatta and 9–10 from Halim. A published ranking puts the Soekarno–Hatta route alone at about 375,000 seats a month in both directions, which fits. Used only for the capacity comparison; the share flown from each airport is its own slider.",l:[LK("Wikipedia — Soekarno–Hatta International Airport",W_+"Soekarno–Hatta_International_Airport"),LK("Wikipedia — Halim Perdanakusuma International Airport",W_+"Halim_Perdanakusuma_International_Airport"),LK("Wikipedia — List of busiest passenger flight routes",W_+"List_of_busiest_passenger_flight_routes"),LK("Aviation A2Z — busiest domestic routes in Southeast Asia","https://aviationa2z.com/index.php/2025/01/27/busiest-domestic-routes-in-southeast-asia/"),LK("FlightsFrom — HLP–SUB schedule","https://www.flightsfrom.com/HLP-SUB")]},
  sec_cap:{t:"Capacity of the line",d:"How many trains and seats the line could carry if demand were no limit. The headway gives the trains per hour; each train must also finish its run inside the 18-hour service day, so a longer ride leaves fewer departures. When every train makes the same stops, that is all that stops cost. A fixed fleet loses more, because each trainset makes fewer trips a day. A timetable that mixes patterns loses most. A stopping train falls behind while it brakes and accelerates, so the express behind it needs a longer gap, and at each stop it stands until that express has passed and a headway has gone by. The figure here alternates the chosen pattern with expresses; it is a first-order estimate, not a constructed timetable. Seats are those of one 8-car set; two sets coupled would double them where platforms are long enough. For scale, the Tokaido Shinkansen runs up to 17 trains an hour in three stopping patterns, and the busiest section of the Beijing–Shanghai line carries 188 pairs of trains a day. The flights are counted as seats on today's schedule, not as what the runways could handle.",l:[LK("Wikipedia — Route capacity",W_+"Route_capacity"),LK("Wikipedia — Headway",W_+"Headway"),LK("Wikipedia — Tokaido Shinkansen",W_+"Tokaido_Shinkansen"),LK("Wikipedia — Beijing–Shanghai high-speed railway",W_+"Beijing–Shanghai_high-speed_railway"),N_HEADWAY,LK("JR Central — about the Shinkansen","https://global.jr-central.co.jp/en/company/about_shinkansen")]},
@@ -167,10 +179,11 @@ const ICONS={
  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
  map:'<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>',
  energy:'<path d="M13 2L5 14h6l-1 8 8-12h-6z"/>',
+ people:'<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14.2c3 .2 5.5 2.6 5.5 5.8"/>',
 };
 function ico(name){return ICONS[name]?`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`:"";}
 const glyph=name=>`<svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`;
-const GROUP_ICON={"Route & train":"train","Fares":"fare","Flights to SUB":"plane","Door to door":"door","Economics":"economics","Energy & environment":"environment"};
+const GROUP_ICON={"Route & train":"train","Fares":"fare","Flights to SUB":"plane","Door to door":"door","Economics":"economics","Demand":"people","Energy & environment":"environment"};
 
 // ---------- inputs ----------
 const P0=v=>pct(v,0), MIN=v=>v+" min";
@@ -227,6 +240,15 @@ const CTLS=[
  {g:"Economics",id:"life",label:"Asset life",min:20,max:80,step:5,def:40,fmt:v=>v+" yr",note:"Years over which the construction cost is repaid."},
  {g:"Economics",id:"scc",label:"Value of a tonne of CO₂",min:0,max:300,step:5,def:50,fmt:v=>"US$"+v+" / tCO₂",note:"Prices emissions in the cost–benefit card. Indonesia's carbon tax law: under US$2. World Bank appraisal range for 2030: US$50–100. US EPA estimate of 2023: about US$190."},
 
+ {g:"Demand",id:"mrail",label:"Jakarta–Surabaya trips by conventional train",min:0,max:6,step:0.1,def:1.5,fmt:v=>fmtNum(v,1)+" M a year",note:"Both directions, end to end. Not published: KAI runs about 13 named services between the two cities, and its Surabaya region carried 6.1 M passengers to all destinations in 2025. An estimate."},
+ {g:"Demand",id:"crail",label:"Share of those who switch to the high-speed train",min:0,max:1,step:0.05,def:0.3,fmt:P0,note:"The new train is about twice as fast but dearer than most of KAI's fares."},
+ {g:"Demand",id:"mroad",label:"Jakarta–Surabaya trips by bus and car",min:0,max:10,step:0.1,def:1.5,fmt:v=>fmtNum(v,1)+" M a year",note:"Both directions. No published count; an estimate."},
+ {g:"Demand",id:"croad",label:"Share of those who switch to the high-speed train",min:0,max:0.5,step:0.01,def:0.1,fmt:P0},
+ {g:"Demand",id:"induced",label:"Induced trips, as a share of riders",min:0,max:0.4,step:0.01,def:0.15,fmt:P0,note:"Trips nobody made before the line opened. 10–20 % on lines a few years after opening."},
+ {g:"Demand",id:"eps",label:"Income elasticity of travel",min:0,max:2,step:0.05,def:1.2,fmt:v=>v.toFixed(2),note:"How strongly a city's GDP per person adds to its trips. 0 = population alone. JICA's 2015 study implies 1.2–1.4; British rail studies 1.2–1.8."},
+ {g:"Demand",id:"gfit",type:"toggle",label:"Fit the distance decay to Whoosh's ridership",def:1,fmt:v=>v?"on":"off",note:"Picks the exponent at which the Jakarta–Surabaya estimate, scaled back to Jakarta–Bandung, gives the 6.2 M passengers Whoosh carried in 2025."},
+ {g:"Demand",id:"gamma",dep:"!gfit",label:"Distance decay γ (trips ∝ 1 ÷ distance^γ)",min:0,max:2.5,step:0.05,def:1,fmt:v=>v.toFixed(2),note:"Used when the fit is off. Gravity models of intercity rail find 1–2; 0 = distance does not matter."},
+
  {g:"Energy & environment",id:"grid",label:"Grid carbon intensity",min:0,max:1000,step:10,def:800,fmt:v=>v+" gCO₂/kWh",note:"Java–Madura–Bali: about 800, with published factors from 530 to 870. Indonesia as a whole ≈ 680. World average ≈ 465."},
  {g:"Energy & environment",id:"eta",label:"Drivetrain efficiency, wire to wheel",min:0.75,max:0.95,step:0.01,def:0.85,fmt:P0},
  {g:"Energy & environment",id:"regen",label:"Braking energy recovered",min:0,max:0.9,step:0.05,def:0.6,fmt:P0,note:"Regenerative braking feeding other trains or the grid."},
@@ -260,6 +282,7 @@ const PRESETS=[
  {name:"Clean grid",note:"Baseline on a grid at 100 gCO₂/kWh, as a net-zero power system would deliver.",stops:"def",set:{grid:100}},
  {name:"Offsets on, cheap credits",note:"Both modes buy voluntary-market credits for all their emissions.",stops:"def",set:{offset:1,oprice:Math.log10(8),oqual:0.3}},
  {name:"Offsets on, durable removal",note:"Both modes pay for engineered removal at US$300 per tonne.",stops:"def",set:{offset:1,oprice:Math.log10(300),oqual:1}}, {name:"Flight surcharge — flying as a premium",note:"Baseline plus a levy of Rp 1,000,000 on every Jakarta–Surabaya air ticket, which doubles what the flight costs.",stops:"def",set:{fsur:1000000}},
+ {name:"Demand-led — trains and load factor from the demand estimate",fit:"demand",note:n=>`Baseline with the timetable sized to the demand card: ${n.trains} trains a day each way, the number the estimated trips fill at ${pct(CTL.lf.def)} (at least ${CTL.trains.min}), and the load factor those trips then give, ${pct(n.lf)}.`,stops:"def",set:{}},
  {name:"Break-even — enough trains to pay for itself",fit:"trains",note:n=>`Baseline with the fewest trains at which fares cover operations and the yearly payment on construction: ${n} a day each way on this route. The load factor is kept, so the passengers to fill them are assumed.`,stops:"def",set:{}},
 ];
 const presetStops=p=>p.stops==="all"?ALL:p.stops==="none"?[]:p.stops==="key"?[RT.key]:DEFAULT_STOPS;
@@ -335,10 +358,93 @@ function markCustom(){document.getElementById("preset").value="custom";document.
 function applyPreset(i){const p=PRESETS[i];CTLS.forEach(c=>setCtl(c,p.set[c.id]!==undefined?p.set[c.id]:c.def));stops.clear();presetStops(p).forEach(s=>stops.add(s));fitPreset(p);update();}
 // Sets the preset's fitted slider, if it has one, from the model of the route and stops in force, and writes the preset's note.
 function fitPreset(p){
-  let n;if(p.fit==="trains"){const s={};CTLS.forEach(c=>{s[c.id]=ctlVal(c);});n=model(s,stops).beTrains;setCtl(CTL.trains,Math.min(n,CTL.trains.max));}
+  let n;const cur=()=>{const s={};CTLS.forEach(c=>{s[c.id]=ctlVal(c);});return s;};
+  if(p.fit==="trains"){n=model(cur(),stops).beTrains;setCtl(CTL.trains,Math.min(n,CTL.trains.max));}
+  if(p.fit==="demand"){ // trains the estimated trips fill at the default load factor, within the slider and the line's ceiling; then the load factor they give
+    const s=cur(),m=model(s,stops),t=Math.max(CTL.trains.min,Math.min(m.cap.cur.dep,Math.round(m.dem.trainsFill*s.lf/CTL.lf.def)));
+    setCtl(CTL.trains,t);const m2=model(cur(),stops);n={trains:t,lf:Math.max(CTL.lf.min,Math.min(CTL.lf.max,m2.dem.lf))};setCtl(CTL.lf,Math.round(n.lf*100)/100);}
   document.getElementById("presetNote").textContent=typeof p.note==="function"?p.note(n):p.note;
 }
 function toggleStop(id){if(!OPT.includes(id))return;stops.has(id)?stops.delete(id):stops.add(id);markCustom();update();}
+
+// ---------- passenger demand ----------
+// Catchments: population in thousands, mid-2024, and GRDP per person in Rp million at current prices (BPS). st lists the stations
+// that can serve the area in order of preference, the second ones within about 45 km (never Jakarta or Surabaya, whose flights already carry their surroundings); the first one served takes it, and an area none of them serves
+// rides no train. Cilacap, Indramayu and Bojonegoro use GRDP without oil and gas (Bojonegoro: without mining, an estimate). Areas around Babakan,
+// Karanganyar and Tegal are split by kecamatan to the nearest station, at the parent regency's GRDP per person.
+const AREAS=[
+ {n:"Jabodetabek",pop:32291,gdp:162.6,st:["jakarta"]},
+ {n:"Kab. Karawang",pop:2554,gdp:121.3,st:["karawang"]},
+ {n:"Bandung Raya",pop:8764,gdp:73.3,st:["bandung","padalarang"]},
+ {n:"Kab. Sumedang",pop:1187,gdp:39.7,st:["sumedang","bandung"]},
+ {n:"Kab. Garut",pop:2717,gdp:29.0,st:["garut"]},
+ {n:"Tasikmalaya",pop:2672,gdp:29.7,st:["tasikmalaya"]},
+ {n:"Banjar and Ciamis",pop:1469,gdp:33.2,st:["banjar","tasikmalaya"]},
+ {n:"Kab. Cilacap, Sidareja",pop:64.4,gdp:45.3,st:["sidareja","cilacap"]},
+ {n:"Kab. Cilacap",pop:1843,gdp:45.3,st:["cilacap","kroya","sidareja"]},
+ {n:"Kab. Cilacap, Kroya",pop:119.6,gdp:45.3,st:["kroya","cilacap"]},
+ {n:"Kab. Banyumas",pop:1847,gdp:40.2,st:["purwokerto","kroya"]},
+ {n:"Kab. Kebumen",pop:1415,gdp:27.3,st:["kebumen"]},
+ {n:"Kab. Kulon Progo",pop:445,gdp:38.0,st:["yia","yogyakarta"]},
+ {n:"Yogyakarta, Sleman, Bantul",pop:2562,gdp:58.4,st:["yogyakarta","yia"]},
+ {n:"Solo Raya",pop:4824,gdp:55.3,st:["surakarta"]},
+ {n:"Kab. Sragen",pop:1005,gdp:52.2,st:["sragen","surakarta"]},
+ {n:"Madiun",pop:960,gdp:46.1,st:["madiun"]},
+ {n:"Kab. Nganjuk",pop:1132,gdp:32.0,st:["nganjuk"]},
+ {n:"Mojokerto",pop:1292,gdp:94.3,st:["mojokerto"]},
+ {n:"Surabaya, Sidoarjo, Gresik, Bangkalan",pop:7560,gdp:170.2,st:["surabaya"]},
+ {n:"Kab. Indramayu",pop:1914,gdp:32.1,st:["jatibarang","cirebon"]},
+ {n:"Kab. Majalengka",pop:1353,gdp:34.2,st:["kertajati","cirebon"]},
+ {n:"Cirebon",pop:2065,gdp:38.2,st:["cirebon","babakan"]},
+ {n:"East Kab. Cirebon and west Brebes",pop:1275,gdp:29.0,st:["babakan","cirebon"]},
+ {n:"South Brebes and south Kab. Tegal",pop:1280,gdp:29.5,st:["karanganyar","purwokerto"]},
+ {n:"Tegal and north Brebes",pop:2139,gdp:34.8,st:["tegal"]},
+ {n:"Pekalongan",pop:1340,gdp:33.7,st:["pekalongan"]},
+ {n:"Kab. Batang",pop:838,gdp:36.3,st:["lebo","pekalongan"]},
+ {n:"Kab. Kendal",pop:1065,gdp:55.3,st:["lebo","semarang"]},
+ {n:"Semarang and Demak",pop:4052,gdp:91.0,st:["semarang"]},
+ {n:"Salatiga",pop:201,gdp:89.8,st:["salatiga","semarang"]},
+ {n:"Kab. Grobogan",pop:1506,gdp:24.9,st:["purwodadi"]},
+ {n:"Kab. Blora",pop:908,gdp:36.6,st:["cepu"]},
+ {n:"Kab. Bojonegoro",pop:1325,gdp:40.3,st:["bojonegoro"]},
+ {n:"Kab. Lamongan",pop:1378,gdp:37.8,st:["lamongan"]},
+];
+const WHOOSH_PAX=6.2e6, WHOOSH_YEAR=2025, AIR_PAX_2025=3.77e6, MIN_PAIR_KM=100, GDP_REF=78.62; // GDP_REF: Indonesia's GDP per person, Rp million
+const areaMass=(a,eps)=>a.pop*1e3*Math.pow(a.gdp/GDP_REF,eps);           // population weighted by income: the "economic mass" of the gravity model
+const homeMass=(id,eps)=>AREAS.filter(a=>a.st.includes(id)).reduce((t,a)=>t+areaMass(a,eps),0); // every area the station can serve: for Bandung, Sumedang too, as Whoosh does today
+// Trips a year on the new train between every pair of served stations. Jakarta–Surabaya is built up from today's travel between the
+// two cities; every other pair is scaled from it by a gravity model: trips ∝ mass_i × mass_j ÷ distance^γ.
+// q: {st, pos, idx (served, in order), Tmin, L, B (end of the built line), trains, airPaxYr}
+function demandCore(q,s){
+  const d={}, served=new Set(q.idx.map(i=>q.st[i].id)), mass=new Map();
+  d.assign=[];for(const a of AREAS){const id=a.st.find(x=>served.has(x));d.assign.push({a,id:id||null,M:areaMass(a,s.eps)});if(id)mass.set(id,(mass.get(id)||0)+areaMass(a,s.eps));}
+  d.share=shareRule(q.Tmin/60); d.airMkt=q.airPaxYr;
+  d.air=q.airPaxYr*d.share; d.rail=s.mrail*1e6*s.crail; d.road=s.mroad*1e6*s.croad;
+  d.div=d.air+d.rail+d.road; d.js=d.div/(1-s.induced); d.ind=d.js-d.div;
+  const MJ=homeMass("jakarta",s.eps), MS=homeMass("surabaya",s.eps), MB=homeMass("bandung",s.eps), Ljs=q.pos[q.st.length-1];
+  d.MJ=MJ;d.MS=MS;d.MB=MB;
+  // the exponent at which Jakarta–Surabaya, scaled back to Jakarta–Bandung, gives Whoosh's passengers
+  d.gFitRaw=d.js>0?Math.log(WHOOSH_PAX*MS/(d.js*MB))/Math.log(Ljs/WHOOSH_KM):NaN;
+  d.gFit=isFinite(d.gFitRaw)?Math.max(0,Math.min(3,d.gFitRaw)):1;
+  d.gamma=s.gfit?d.gFit:s.gamma;
+  d.jbPred=d.js*(MB/MS)*Math.pow(Ljs/WHOOSH_KM,d.gamma);
+  const wJS=MJ*MS/Math.pow(Ljs,d.gamma), P=q.idx.map(i=>({id:q.st[i].id,x:q.pos[i],M:mass.get(q.st[i].id)||0}));
+  d.pairs=[];d.seg=new Float64Array(Math.max(0,P.length-1));let pkm=0;
+  for(let a=0;a<P.length;a++)for(let b=a+1;b<P.length;b++){
+    const A=P[a],Z=P[b],km=Z.x-A.x;
+    if(Z.x<=q.B+0.01||km<MIN_PAIR_KM||!A.M||!Z.M)continue;            // trips within the built line stay on today's Whoosh trains; short hops stay on local trains and roads
+    const r=wJS>0?d.js*A.M*Z.M/Math.pow(km,d.gamma)/wJS:0;
+    d.pairs.push({a:A.id,b:Z.id,km,r});pkm+=r*km;for(let k=a;k<b;k++)d.seg[k]+=r;}
+  d.pairs.sort((x,y)=>y.r-x.r);
+  d.trips=d.pairs.reduce((t,p)=>t+p.r,0); d.pkm=pkm; d.eq=pkm/q.L;            // end-to-end equivalents, as the load-factor slider counts riders
+  d.jsTrips=(d.pairs.find(p=>p.a==="jakarta"&&p.b==="surabaya")||{r:0}).r;
+  d.lf=pkm/(q.trains*730*SEATS*q.L);                                         // the load factor these trips fill at the trains slider
+  d.trainsFill=pkm/(730*SEATS*q.L*s.lf);                                     // trains a day each way they fill at the load-factor slider
+  d.segDay=[...d.seg].map(v=>v/730); d.peak=d.segDay.reduce((k,v,i,a)=>v>a[k]?i:k,0); d.peakDay=d.segDay[d.peak]||0;
+  d.P=P;
+  return d;
+}
+function demand(m,s){return demandCore({st:ST,pos:m.pos,idx:m.idx,Tmin:m.Tmin,L:m.L,B:B_KM,trains:s.trains,airPaxYr:m.cap.airPaxYr},s);}
 
 // ---------- model ----------
 function mkTrain(s,vmaxKmh){
@@ -453,8 +559,9 @@ function model(s,stopSet){
   for(const l of m.legs){l.ticket=l.fare+m.levy;l.price=l.ticket+l.co2.offCost;l.gcost=l.price+s.vot*l.d2d.total/60;l.ratio=m.gcRail/l.gcost;l.parity=l.d2d.total-(s.tacc+s.tpre+s.tegr);}
   // the surcharge at which the train's generalised cost equals the flight's, and the one at which it falls to 90 % of it and the verdict turns
   for(const x of [m,...m.legs]){const g0=(x===m?m.gcAir:x.gcost)-m.levy;x.levyTie=Math.max(0,m.gcRail-g0);x.levyWin=Math.max(0,m.gcRail/0.9-g0);}
-  m.share=1/(1+Math.exp(1.1*(m.Tmin/60-3.9)));
+  m.share=shareRule(m.Tmin/60);
   m.shareLevy=m.levy>0&&s.vot>0?shareRule(m.Tmin/60-m.levy/s.vot):null; // the surcharge counted as the hours it is worth, taken off the train ride
+  m.dem=demand(m,s);
   // economics of the extension only
   const fx=s.fx, f=m.ext/m.L;
   m.capex=m.ext*s.capex*1e6*fx; m.annCap=m.capex*crf(s.wacc,s.life);
@@ -539,7 +646,7 @@ const niceStep=(range,n)=>{const raw=range/n,p=Math.pow(10,Math.floor(Math.log10
 let M=null;
 function update(){
   CTLS.forEach(c=>{state[c.id]=ctlVal(c);const o=document.getElementById("out_"+c.id);if(o)o.textContent=c.fmt(state[c.id]);});
-  CTLS.forEach(c=>{if(c.dep)document.getElementById("ctl_"+c.id).classList.toggle("off",!state[c.dep]);});
+  CTLS.forEach(c=>{if(c.dep){const neg=c.dep[0]==="!",on=!!state[neg?c.dep.slice(1):c.dep];document.getElementById("ctl_"+c.id).classList.toggle("off",neg?on:!on);}}); // dep "!x": active while x is off
   document.querySelectorAll("#stopList input").forEach(el=>{if(!el.disabled)el.checked=stops.has(el.dataset.stop);});
   const s=state;let m=M=model(s,stops);
   { // the trains slider ends at the line's ceiling, which moves with the headway, the stops and the running time
@@ -578,6 +685,7 @@ function update(){
     :`<tr><td>${x.name}</td><td>${fmtNum(m.pos[i],0)}</td><td>${k?fmtHM(m.arr[k]/60):"0:00"}</td><td>${k?fmtRp(m.fares[k].total):"–"}</td></tr>`;});
   tt+=`</table>`;
   const sd=Math.max(0,1-s.st-s.ss);
+  const areasOpen=!!document.querySelector("#cards details.areas[open]"); // the cards are rebuilt on every input; keep the areas table open if it was
   document.getElementById("cards").innerHTML=
    `<div class="card"><h2>${ico("route")}Timetable<span>h:mm from Halim</span></h2>${tt}${kv([
       ["Fastest running time",fmtDur(m.J.run/60),"sum of the runs between stops"],
@@ -677,6 +785,7 @@ function update(){
         ["Train's yearly electricity",fmtNum(m.E*m.trainsYr/1e6,0)+" GWh",fmtNum(m.trainsYr,0)+" trains × "+fmtNum(m.E/1000,1)+" MWh"],
         ["Least solar panel area to power the line"+refBtn("pv"),fmtArea(m.pvArea),`${fmtNum(m.E*m.trainsYr/1e6,0)} GWh ÷ ${fmtNum(s.pv,0)} kWh per kWp ÷ ${PV_W_M2} W per m² · ${fmtNum(m.pvMWp,0)} MWp, ${fmtNum(m.pvMWp/CIRATA_MWP,1)}× the Cirata floating plant · balanced over a year, before storage and losses`],
       ])}</div></div></div>`+
+   demandCard(m,s)+
    `<div class="card" style="grid-column:1/-1"><h2>${ico("economics")}Economics of the extension${refBtn("sec_econ")}<span>${RT.skipsBandung?"Karawang → Surabaya only":"Bandung → Surabaya only"} · per year · the first line is treated as built</span></h2>
       <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px">
       <div>${kv([
@@ -704,8 +813,67 @@ function update(){
         ["Break-even trains per day, each direction"+refBtn("sec_econ"),isFinite(m.beTrains)?fmtNum(m.beTrains,0)+(m.beTrains>m.cap.cur.dep?flag("over the ceiling","bad"):""):"never",isFinite(m.beTrains)?`(maintenance + yearly payment) ÷ surplus per train · at the current fare and load factor: ${fmtNum(m.beTrains*730*m.paxRail/1e6,1)} M passengers a year`:"a train does not earn back its own electricity and operating cost"],
       ])}</div></div></div>`+cbaCard(m,s)+capCard(m,s);
 
+  { const a=document.querySelector("#cards details.areas");if(a){a.open=areasOpen;animateDetails(a);} }
+  { const b=document.getElementById("demLF");if(b)b.onclick=()=>{setCtl(CTL.lf,Math.max(CTL.lf.min,Math.min(CTL.lf.max,Math.round(m.dem.lf*100)/100)));markCustom();update();}; }
   drawSpeed(m,s);drawD2D(m,s);drawGC(m,s);drawCO2(m,s);drawPatterns(m,s);drawSens(m,s);drawEcon(m,s);drawPeers(m,s);drawMap(m,s);drawRoutes(m,s);
 }
+
+// ---------- demand card ----------
+// Where the passengers would come from: Jakarta–Surabaya built up from today's travel, the other station pairs from population and income.
+function demandCard(m,s){
+  const d=m.dem,M=v=>fmtNum(v/1e6,v<1e7?2:1)+" M",hd=t=>`<div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2);margin-bottom:4px;font-weight:600">${t}</div>`;
+  const nm=id=>SHORT[id]||id, bEnd=RT.skipsBandung?"Karawang":"Bandung", lfOk=d.lf>=CTL.lf.min&&d.lf<=CTL.lf.max;
+  const P=d.P, seats=s.trains*SEATS, fit=s.gfit;
+  const segRows=d.segDay.map((v,k)=>({label:nm(P[k].id)+" – "+nm(P[k+1].id),color:k===d.peak?C_RAIL:null,segs:[[k===d.peak?"Fullest section":"Passengers a day, each direction",v,k===d.peak?C_RAIL:"#6b6c75"]],total:fmtNum(v,0)+" · "+pct(seats>0?v/seats:0)+" full"}));
+  const top=d.pairs.slice(0,10), rest=d.pairs.slice(10).reduce((t,p)=>t+p.r,0);
+  let pt=`<table class="tt"><tr><th>Station pair</th><th>km</th><th>trips a year</th><th>a day, each way</th><th>of all trips</th></tr>`;
+  for(const p of top)pt+=`<tr><td>${nm(p.a)} – ${nm(p.b)}</td><td>${fmtNum(p.km,0)}</td><td>${M(p.r)}</td><td>${fmtNum(p.r/730,0)}</td><td>${pct(d.trips>0?p.r/d.trips:0)}</td></tr>`;
+  if(rest>0)pt+=`<tr class="skip"><td>${d.pairs.length-10} other pairs</td><td></td><td>${M(rest)}</td><td>${fmtNum(rest/730,0)}</td><td>${pct(rest/d.trips)}</td></tr>`;
+  pt+=`</table>`;
+  return `<div class="card" style="grid-column:1/-1"><h2>${ico("people")}Passenger demand${refBtn("sec_demand")}<span>an estimate from today's travel and the population and income of each station's area · per year, both directions</span></h2>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px">
+      <div>${hd("Jakarta–Surabaya, from today's travel")}${kv([
+        ["Flight passengers today"+refBtn("flights"),M(d.airMkt),`flights slider × seats × load factor × 2 × 365 · ${M(AIR_PAX_2025)} flew CGK–SUB and HLP–SUB in 2025`],
+        ["Taken from the flights"+refBtn("r_share"),M(d.air),`× ${pct(d.share)}, the rail share for a ${fmtDur(m.Tmin)} ride`],
+        ["Taken from conventional trains"+refBtn("mrail"),M(d.rail),`${fmtNum(s.mrail,1)} M × ${pct(s.crail)}`],
+        ["Taken from buses and cars"+refBtn("mroad"),M(d.road),`${fmtNum(s.mroad,1)} M × ${pct(s.croad)}`],
+        ["Induced trips"+refBtn("induced"),M(d.ind),`${pct(s.induced)} of the riders are new trips`],
+        ["Jakarta–Surabaya riders",M(d.js),fmtNum(d.js/730,0)+" a day each way",true],
+      ])}</div>
+      <div>${hd("Every trip on the extension")}${kv([
+        ["Station pairs counted",fmtNum(d.pairs.length,0),`both stations served, at least ${MIN_PAIR_KM} km apart, one of them beyond ${bEnd}`],
+        ["Distance decay γ"+refBtn("gamma"),d.gamma.toFixed(2),fit?"fitted to Whoosh's ridership"+(d.gFitRaw<0?flag("clipped at 0","warn"):d.gFitRaw>3?flag("clipped at 3","warn"):""):"from the slider · the fit to Whoosh gives "+d.gFit.toFixed(2)],
+        ["Trips a year",M(d.trips),`Jakarta–Surabaya ${pct(d.trips>0?d.jsTrips/d.trips:0)} of them · ${fmtNum(d.trips/365,0)} a day`],
+        ["Passenger-km a year",fmtNum(d.pkm/1e9,2)+" billion","average trip "+fmtNum(d.trips>0?d.pkm/d.trips:0,0)+" km"],
+        ["End-to-end equivalents"+refBtn("lf"),M(d.eq),`passenger-km ÷ ${fmtNum(m.L,0)} km · the load-factor slider gives ${M(m.ridersYr)}`],
+        ["Load factor these trips fill",d.lf>1?pct(d.lf)+flag("more than the seats","bad"):pct(d.lf),`at ${s.trains} trains a day each way · the slider is at ${pct(s.lf)}`,true],
+        ["Trains a day each way they fill",fmtNum(d.trainsFill,1),`at the slider's ${pct(s.lf)} load factor`],
+        ["Fullest section",d.segDay.length?fmtNum(d.peakDay,0)+" a day":"–",d.segDay.length?`${pct(seats>0?d.peakDay/seats:0)} of the seats at the trains slider · each way: ${nm(P[d.peak].id)} – ${nm(P[d.peak+1].id)}`:""],
+      ])}
+      <div style="margin-top:10px"><button class="btn" id="demLF" ${lfOk?"":"disabled"}>Set the load factor to ${pct(Math.max(CTL.lf.min,Math.min(CTL.lf.max,d.lf)))}</button></div></div>
+      <div>${hd("Checks")}${kv([
+        ["Jakarta–Bandung by the same formula",M(d.jbPred),`Whoosh carried ${M(WHOOSH_PAX)} in ${WHOOSH_YEAR}`+(fit&&d.gFitRaw>=0&&d.gFitRaw<=3?" · equal by construction":" · "+(d.jbPred>=WHOOSH_PAX?"+":"−")+pct(Math.abs(d.jbPred/WHOOSH_PAX-1))+" off")],
+        ["Exponent that reproduces Whoosh",isFinite(d.gFitRaw)?d.gFitRaw.toFixed(2):"–",`ln(${fmtNum(WHOOSH_PAX/1e6,1)} M × mass of Surabaya ÷ (Jakarta–Surabaya riders × mass of Bandung)) ÷ ln(${fmtNum(m.pos[ST.length-1],0)} ÷ 142.3) · intercity rail studies find 1–2`],
+        ["Economic mass of each end",`${fmtNum(d.MJ/1e6,1)} · ${fmtNum(d.MB/1e6,1)} · ${fmtNum(d.MS/1e6,1)} M`,`population × (GDP per person ÷ the national figure)^${s.eps.toFixed(2)} · Jakarta · Bandung · Surabaya`],
+        ["Published forecasts"+refBtn("r_forecasts"),fmtNum(d.trips/365,0)+" a day","this estimate, extension trips only · JICA 2015: 161,000 a day in 2030 for the whole line · Kemenhub 2025: 63,000 · ITB 2019: 5,100 in 2025 to 12,600 in 2050"],
+      ])}</div></div>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:18px;margin-top:14px">
+      <div>${hd("Busiest station pairs")}${pt}</div>
+      <div>${hd("Passengers a day on each section, each direction, against "+fmtNum(seats,0)+" seats")}${segRows.length?hbars(segRows,v=>fmtNum(v,0),{w:520,lw:170,rw:120,bh:15}):""}</div>
+      </div>${areaTable(m,s)}</div>`;
+}
+// The areas each station draws on: on this route, served, passed (and taken by no other station), or not on the route.
+function areaTable(m,s){
+  const onRoute=new Set(ST.map(x=>x.id)),rows=m.dem.assign.filter(x=>x.a.st.some(id=>onRoute.has(id)));
+  const order=id=>ST.findIndex(x=>x.id===id);
+  rows.sort((x,y)=>order(x.id??x.a.st.find(i=>onRoute.has(i)))-order(y.id??y.a.st.find(i=>onRoute.has(i))));
+  const served=rows.filter(x=>x.id), off=rows.filter(x=>!x.id);
+  let t=`<table class="tt"><tr><th>Area</th><th>station</th><th>people</th><th>GDP per person</th><th>economic mass</th></tr>`;
+  for(const x of [...served,...off])t+=`<tr${x.id?"":' class="skip"'}><td>${x.a.n}</td><td>${x.id?nmSt(x.id)+(x.id!==x.a.st[0]?" <small>(nearest served)</small>":""):"not served"}</td><td>${fmtNum(x.a.pop/1000,2)} M</td><td>Rp ${fmtNum(x.a.gdp,1)} M</td><td>${x.id?fmtNum(x.M/1e6,2)+" M":"–"}</td></tr>`;
+  t+=`</table>`;
+  return `<details class="areas" style="margin-top:12px"><summary><span>The areas around the stations: population and GDP per person, BPS 2024 · ${served.length} of ${rows.length} served</span></summary><div style="padding:0 12px 10px">${t}<div class="legend"><span>Economic mass = people × (GDP per person ÷ Rp ${fmtNum(GDP_REF,1)} M, Indonesia's) ^ ${s.eps.toFixed(2)}. GDP per person is regional GDP at current prices; Cilacap, Indramayu and Bojonegoro without oil and gas. An area whose station is passed goes to the next one on its list, if that one is served.</span></div></div></details>`;
+}
+const nmSt=id=>(ST.find(x=>x.id===id)||{name:id}).name;
 
 // ---------- cost–benefit card ----------
 // The extension as the country sees it: resources used and saved per year. Fares and the surcharge are transfers and do not appear.
@@ -1031,12 +1199,14 @@ function drawRoutes(m,s){
   const rows=ROUTES.map(r=>{const st=r.stations,B=r.builtKm,ext=r.extKm*s.alignf,L=B+ext,Z=zonesFor(r,L),GR=s.grade?(r===RT?m.G:gradeCells(r,s.alignf)):null,pos=st.map(x=>x.km<=B?x.km:B+(x.km-B)*s.alignf);
     const T=idx=>{let t=0;for(let k=1;k<idx.length;k++)t+=simLeg(pos[idx[k-1]],pos[idx[k]],tr,Z,false,GR).t;return (t*(1+s.pad)+s.dwell*60*(idx.length-2))/60;};
     const all=st.map((x,i)=>i),ib=st.reduce((a,x,i)=>x.built?i:a,0);
-    return {r,ext,newLine:T(all.filter(i=>i>=ib&&!st[i].reserve)),express:T(all.filter(i=>st[i].must)),main:T(all.filter(i=>st[i].must||r.def.includes(st[i].id))),capex:ext*s.capex*1e6};});
-  let h=`<div class="cmpwrap"><table class="cmp routes"><tr><th>Route</th><th>New line</th><th>In tunnel</th><th>Stations</th><th>Published time</th><th>Modeled, all stops</th><th>Jakarta–Surabaya, express</th><th>Main stops</th><th>Construction</th></tr>`;
+    const mainIdx=all.filter(i=>st[i].must||r.def.includes(st[i].id)),main=T(mainIdx);
+    const dem=demandCore({st,pos,idx:mainIdx,Tmin:main,L,B,trains:s.trains,airPaxYr:m.cap.airPaxYr},s);
+    return {r,ext,newLine:T(all.filter(i=>i>=ib&&!st[i].reserve)),express:T(all.filter(i=>st[i].must)),main,dem,capex:ext*s.capex*1e6};});
+  let h=`<div class="cmpwrap"><table class="cmp routes"><tr><th>Route</th><th>New line</th><th>In tunnel</th><th>Stations</th><th>Published time</th><th>Modeled, all stops</th><th>Jakarta–Surabaya, express</th><th>Main stops</th><th>Demand at main stops</th><th>Construction</th></tr>`;
   ROUTES.forEach((r,i)=>{const q=rows[i],cur=r===RT;
-    if(!i||ROUTES[i-1].kind!==r.kind)h+=`<tr class="grp"><td colspan="9">${ROUTE_GROUP[r.kind]}</td></tr>`;
-    h+=`<tr class="${cur?"me":"pick"}" ${cur?"":`data-route="${r.id}" title="Switch to this route"`}><td>${routeTitle(r)} <small>via ${r.via}${r.skipsBandung?" · skips Bandung":""}</small></td><td>${fmtNum(q.ext,r.kind==="kcic"?1:0)} km</td><td>${r.pub?fmtNum(r.pub.tunnelKm,2)+" km":"–"}</td><td>${r.nStations}${r.nReserve?` <small>+ ${r.nReserve}</small>`:""}</td><td>${r.pub?fmtDur(r.pub.min):"–"}</td><td>${fmtDur(q.newLine)}${r.pub?` <small>${q.newLine>=r.pub.min?"+":"−"}${pct(Math.abs(q.newLine/r.pub.min-1))}</small>`:""}</td><td>${fmtDur(q.express)}</td><td>${fmtDur(q.main)}</td><td>${fmtUSD(q.capex)}</td></tr>`;});
-  h+=`</table></div><div class="legend"><span>Published: KCIC's pre-feasibility study of 2024, measured from Tegalluar. It does not say which stations the published time calls at. "Modeled, all stops" is this model's time over the new line only, from where it leaves the built one, calling at every station except the reserve ones; the percentage is its gap to the published time.</span><span>Stations are the new ones, Surabaya included; reserve stations follow the plus sign. Lengths include the alignment slider. One cost per km is applied to every route, whatever its share of tunnel.</span></div>`;
+    if(!i||ROUTES[i-1].kind!==r.kind)h+=`<tr class="grp"><td colspan="10">${ROUTE_GROUP[r.kind]}</td></tr>`;
+    h+=`<tr class="${cur?"me":"pick"}" ${cur?"":`data-route="${r.id}" title="Switch to this route"`}><td>${routeTitle(r)} <small>via ${r.via}${r.skipsBandung?" · skips Bandung":""}</small></td><td>${fmtNum(q.ext,r.kind==="kcic"?1:0)} km</td><td>${r.pub?fmtNum(r.pub.tunnelKm,2)+" km":"–"}</td><td>${r.nStations}${r.nReserve?` <small>+ ${r.nReserve}</small>`:""}</td><td>${r.pub?fmtDur(r.pub.min):"–"}</td><td>${fmtDur(q.newLine)}${r.pub?` <small>${q.newLine>=r.pub.min?"+":"−"}${pct(Math.abs(q.newLine/r.pub.min-1))}</small>`:""}</td><td>${fmtDur(q.express)}</td><td>${fmtDur(q.main)}</td><td>${fmtNum(q.dem.trips/1e6,1)} M <small>${pct(q.dem.lf)} full</small></td><td>${fmtUSD(q.capex)}</td></tr>`;});
+  h+=`</table></div><div class="legend"><span>Published: KCIC's pre-feasibility study of 2024, measured from Tegalluar. It does not say which stations the published time calls at. "Modeled, all stops" is this model's time over the new line only, from where it leaves the built one, calling at every station except the reserve ones; the percentage is its gap to the published time.</span><span>Demand: trips a year on the extension with the route's main stops, from the demand card, and the load factor they fill at the trains slider.</span><span>Stations are the new ones, Surabaya included; reserve stations follow the plus sign. Lengths include the alignment slider. One cost per km is applied to every route, whatever its share of tunnel.</span></div>`;
   const el=document.getElementById("routeCmp");el.innerHTML=h;
   el.querySelectorAll("[data-route]").forEach(n=>n.addEventListener("click",()=>setRoute(n.dataset.route)));
 }
@@ -1055,7 +1225,8 @@ const NOTES=()=>[
  `<b>Capacity.</b> The ceiling is one train per headway, for as long as a train can still finish its run inside the ${SERVICE_HOURS}-hour service day: departures = (${SERVICE_HOURS} h − ride) ÷ headway + 1, each with ${SEATS} seats. A trainset makes ${SERVICE_HOURS} h ÷ (ride + ${TURNAROUND_MIN} min turnaround) one-way trips a day, less 10 % spare, which is what a fixed fleet can offer. For a mixed timetable the chosen pattern alternates with expresses and is overtaken at every optional stop: each stop then costs the stopping train the time lost braking and accelerating plus two headways standing, or its dwell if that is longer, and two trains run per such cycle. This is a first-order estimate, not a constructed timetable; station tracks, the terminals and short workings are ignored. The flights are the seats on today's schedule from both Jakarta airports, not what the runways could handle. The capacity verdict sets the ceiling against those seats, with ±15 % counted as no clear winner. Who would fill the seats is not modeled.`,
  `<b>Planet's verdict.</b> CO₂e per passenger after offsets, train against flight, with ±15 % counted as no clear winner. The train carries the electricity it uses at the grid's intensity plus a share of the carbon emitted to build the whole line, spread over the carbon accounting period and all riders, plus the trainsets over 30 years. The flight carries a share of building the aircraft (over 40,000 flights) and the two airports. Carbon payback counts only riders who would otherwise have flown, credits the avoided fuel and aircraft but not the airports, which already exist, and charges the train its electricity and trainsets.`,
  `<b>Offsets.</b> When switched on, both modes buy credits for the chosen share of their gross emissions at one price, and the cost is added to each ticket. Only share × integrity is taken off the emissions shown, so cheap low-integrity credits change the price a little and the verdict less. Because both modes offset the same share, their ratio does not change; offsets matter here through the surcharge, which is larger for whichever mode emits more.`,
- `<b>Not modeled.</b> What separates the routes besides length and stops: terrain, tunnels and viaducts (one cost per km is applied to all of them) and the population each would serve. Also a Surabaya terminus nearer the centre, a constructed timetable and the demand between intermediate cities, competition from the toll roads themselves and from conventional trains, future aircraft and fuel, and the grid getting cleaner over the asset life.`,
+ `<b>Demand.</b> An estimate, kept apart from the load-factor slider until its button or the demand-led preset applies it. Jakarta–Surabaya riders = (flight passengers × rail share + conventional-train trips × switching share + bus and car trips × switching share) ÷ (1 − induced share). Every other pair of served stations, at least ${MIN_PAIR_KM} km apart and not both on the built line, is scaled from it by trips ∝ mass_i × mass_j ÷ distance^γ, with mass = population × (GRDP per person ÷ Indonesia's)^ε from BPS figures for the regencies and cities around each station. γ is fitted by default so that the same formula gives Whoosh's ${fmtNum(WHOOSH_PAX/1e6,1)} M passengers of ${WHOOSH_YEAR} on Jakarta–Bandung. One rail share is applied to every pair, and the fare does not change demand.`,
+ `<b>Not modeled.</b> What separates the routes besides length, stops and the population along them: terrain, tunnels and viaducts (one cost per km is applied to all of them). Also a Surabaya terminus nearer the centre, a constructed timetable, demand that responds to the fare and differs by city pair, competition from the toll roads themselves and from conventional trains, future aircraft and fuel, and the grid getting cleaner over the asset life.`,
 ];
 
 // ---------- tooltip, modal ----------
